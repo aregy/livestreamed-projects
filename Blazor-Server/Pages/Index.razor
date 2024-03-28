@@ -1,0 +1,87 @@
+﻿@using DevExpress.Blazor
+@using DevExpress.Pdf
+@inject FileUrlStorageService _FileUrlStorageService
+@inject NavigationManager _NavigationManager
+@inject IJSRuntime _JSRuntime
+
+@page "/"
+
+<PageTitle>Index</PageTitle>
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+
+<div id="overviewDemoDropZone" class="card custom-drop-zone bg-light rounded-3 w-100 m-0">
+    <span class="drop-file-icon mb-3"></span>
+    <span>Drag and Drop File Here</span><span class="m-1">or</span>
+    <button id="overviewDemoSelectButton" class="btn border-primary btn-primary m-1">Select File</button>
+</div>
+<DxUpload Name="ImageUpload"
+          UploadUrl="@GetUploadUrl("/api/Upload/UploadFile/")"
+          FileUploaded="@OnUploaded"
+      ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
+          FileUploadStarted="@OnStarted"
+          ExternalDropZoneCssSelector="#overviewDemoDropZone"
+          ExternalDropZoneDragOverCssClass="bg-light border-secondary text-dark"
+          ChunkSize="20000"
+          ShowFileList="false"
+          AllowedFileExtensions="@(new List<string> {".pdf"})">
+</DxUpload>
+<DxButton Visible="@_HasDownload" Text="Download file"
+          SelectedFilesChanged="@SelectedFilesChanged"
+          CssClass="mb3"
+          Enabled="@_HasDownload"
+          RenderStyle="@ButtonRenderStyle.Info"
+          Click="@((MouseEventArgs args) => DownloadPdf())" />
+
+@code {
+    string _FileName;
+    bool _HasDownload = true;
+    int _SelectedFilesCount;
+
+    protected string GetUploadUrl(string url)
+    {
+        return _NavigationManager.ToAbsoluteUri(url).AbsoluteUri;
+    }
+    protected void SelectedFilesChanged(IEnumerable<UploadFileInfo> files)
+    {
+        _SelectedFilesCount = files.ToList().Count;
+        InvokeAsync(StateHasChanged);
+    }
+    private void OnStarted(FileUploadEventArgs e)
+    {
+        _HasDownload = true;
+    }
+    async void OnUploaded(FileUploadEventArgs e)
+    {
+        _FileName = e.FileInfo.Name;
+        _HasDownload = true;
+    }
+    void DownloadPdf()
+    {
+        using (MemoryStream memoryStream = CreateAttachment())
+        {
+            _JSRuntime.InvokeVoidAsync("downloadFile", "output.pdf", Convert.ToBase64String(memoryStream.ToArray()));
+        }
+
+    }
+    MemoryStream CreateAttachment()
+    {
+        MemoryStream memoryStream = new MemoryStream();
+        using (PdfDocumentProcessor documentProcessor = new PdfDocumentProcessor())
+        {
+            documentProcessor.LoadDocument($"wwwroot/uploads/{_FileName}");
+
+            while (documentProcessor.Document.Pages.Count > 1)
+            {
+                documentProcessor.DeletePage(1);
+            }
+            //
+            documentProcessor.SaveDocument(memoryStream); //
+        }
+        return memoryStream;
+    }
+}
