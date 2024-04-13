@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SignPDF.NewPage1"
+             xmlns:local="clr-namespace:SignPDF.ViewModels"
+             xmlns:dx="clr-namespace:DevExpress.Maui.Core;assembly=DevExpress.Maui.Core"
+             xmlns:dxcv="clr-namespace:DevExpress.Maui.CollectionView;assembly=DevExpress.Maui.CollectionView" 
+             xmlns:dxe="clr-namespace:DevExpress.Maui.Editors;assembly=DevExpress.Maui.Editors"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             Title="Collection View">
+    <ContentPage.BindingContext>
+        <local:NavigationViewModel/>
+    </ContentPage.BindingContext>
+    <ContentPage.Resources>
+        <Style TargetType="dxcv:SwipeItem">
+            <Setter Property="FontColor" Value="White"/>
+            <Setter Property="FontSize" Value="Medium"/>
+        </Style>
+    </ContentPage.Resources>
+    <VerticalStackLayout>
+        <dxe:FilterChipGroup ItemsSource="{Binding PredefinedFilters}" SelectedItems="{Binding SelectedFilters, Mode=TwoWay}" x:Name="filtersChipGroup" IsMultiline="False" DisplayMember="DisplayText" Padding="10"/>
+        <dxcv:DXCollectionView ItemsSource="{Binding Documents}"
+                               DisplayMember="Name"
+                               TapCommand="{Binding TapCommand}"
+                               IsPullToRefreshEnabled="True"
+                               IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
+                               PullToRefreshCommand="{Binding PullToRefreshCommand}"
+                               FilterString="{Binding Filter, Mode=TwoWay}">
+            <dxcv:DXCollectionView.ItemTemplate>
+                <DataTemplate x:DataType="{x:Type local:DocumentViewModel}">
+                    <!--<dxcv:SwipeContainer >
+                        <dxcv:SwipeContainer.ItemView>-->
+                    <dx:DXBorder Style="{StaticResource cardStyle}" Margin="10,5">
+                        <Grid ColumnDefinitions="*,Auto" RowSpacing="12" RowDefinitions="Auto,Auto" Padding="16" BackgroundColor="Transparent">
+                            <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" Style="{StaticResource CardHeader}"/>
+                            <HorizontalStackLayout Grid.Row="1">
+                                <dx:DXImage Source="clock" WidthRequest="16" HeightRequest="16" Margin="10,0,0,0" TintColor="{dx:ThemeColor OnPrimaryContainer}"/>
+                                <Label Text="{Binding SignedAt, StringFormat='{0:m}'}" Style="{dx:ThemeNeutralColor Light=10, Dark=99}" Margin="10,0,0,0" Grid.Row="1" Grid.Column="1"/>
+                            </HorizontalStackLayout>
+                            <dx:DXBorder IsVisible="False" CornerRadius="4" Padding="6,2" BackgroundColor="#f5ac95" HorizontalOptions="End" Grid.Column="1">
+                                <dx:DXBorder.Triggers>
+                                    <DataTrigger Binding="{Binding IsPending}" Value="True" TargetType="dx:DXBorder">
+                                        <Setter Property="IsVisible" Value="True"/>
+                                    </DataTrigger>
+                                </dx:DXBorder.Triggers>
+                                <Label Text="Pending" HorizontalOptions="Center" TextColor="{dx:ThemeColor OnPrimaryFixed}"/>
+                            </dx:DXBorder>
+                        </Grid>
+                    </dx:DXBorder>
+
+                    <!--<dx:DXStackLayout Margin="0" ItemSpacing="0" BackgroundColor="{Binding ItemColor}">
+                                <Label Margin="20" Text="{Binding Description}"/>
+                                <BoxView Style="{StaticResource SeparatorStyle}"/>
+                            </dx:DXStackLayout>-->
+                    <!--</dxcv:SwipeContainer.ItemView>
+
+                        <dxcv:SwipeContainer.StartSwipeItems>
+                            <dxcv:SwipeItem Caption="{Binding Name}"
+                            BackgroundColor="Green"
+                            Command="{Binding ChangeStateCommand}"/>
+                        </dxcv:SwipeContainer.StartSwipeItems>
+
+                        <dxcv:SwipeContainer.EndSwipeItems>
+                            <dxcv:SwipeItem Caption="Delete"
+                            BackgroundColor="Red"
+                            Image="deletetask">
+                                <dxcv:SwipeItem.Behaviors>
+                                    <toolkit:EventToCommandBehavior EventName="Tap" Command="{Binding TapCommand}"/>
+                                </dxcv:SwipeItem.Behaviors>
+                            </dxcv:SwipeItem>
+
+                        </dxcv:SwipeContainer.EndSwipeItems>
+                    </dxcv:SwipeContainer>-->
+                </DataTemplate>
+            </dxcv:DXCollectionView.ItemTemplate>
+        </dxcv:DXCollectionView>
+    </VerticalStackLayout>
+</ContentPage>

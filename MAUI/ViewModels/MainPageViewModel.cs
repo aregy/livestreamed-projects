@@ -8,13 +8,22 @@ using DevExpress.Office.DigitalSignatures;
 //using GameKit;
 using DevExpress.Maui.Editors;
 using DevExpress.XtraCharts.Native;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Linq;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace SignPDF.ViewModels;
 
-public class MainPageViewModel : BindableBase {
+public class MainPageViewModel : BindableBase
+{
+    private ImageEdit imageEdit;
+
     #region fields
-    ImageSource pdfPreview;
-    //const string defaultDocumentName = "ArrivalForm.pdf";
+    public List<string> Items { get; set; }
+
+    public ImageSource pdfPreview;
     const string defaultDocumentName = "JewelCityLetter.pdf";
     const string defaultCertificateName = "pfxCertificate.pfx";
     const string defaultCertificatePassword = "123";
@@ -23,42 +32,58 @@ public class MainPageViewModel : BindableBase {
     bool isSignatureViewOpened;
     #endregion fields
     #region properties
-    public ImageSource PdfPreview {
-        get {
+    public ImageSource PdfPreview
+    {
+        get
+        {
             return pdfPreview;
         }
-        set {
+        set
+        {
             pdfPreview = value;
             RaisePropertyChanged();
         }
     }
-    public bool IsSignatureViewOpened {
-        get {
+    public bool IsSignatureViewOpened
+    {
+        get
+        {
             return isSignatureViewOpened;
         }
-        set {
+        set
+        {
             isSignatureViewOpened = value;
             RaisePropertyChanged();
         }
     }
-    public ICommand SignPdfCommand {
+    public ICommand SignPdfCommand
+    {
+        get; set;
+    }
+    public ICommand OpenFileCommand
+    {
         get;
         set;
     }
-    public ICommand OpenFileCommand {
+    public ICommand OpenSignatureViewCommand
+    {
         get;
         set;
     }
-    public ICommand OpenSignatureViewCommand {
+    public ICommand CloseSignatureViewCommand
+    {
         get;
         set;
     }
-    public ICommand CloseSignatureViewCommand {
+    public ICommand ImageLoadedCommand
+    {
         get;
         set;
     }
     #endregion properties
-    public MainPageViewModel() {
+    
+    public MainPageViewModel()
+    {
         InitFiles();
         UpdatePreview();
         SignPdfCommand = new Command<byte[]>(SignPdf);
@@ -67,36 +92,37 @@ public class MainPageViewModel : BindableBase {
         CloseSignatureViewCommand = new Command(CloseSignatureView);
         ImageLoadedCommand = new Command(OnImageLoaded);
     }
-    public ICommand ImageLoadedCommand
-    {
-        get;
-        set;
-    }
+    
     private void OnImageLoaded(object args)
     {
         if (args is ImageEdit)
-            imageEdit = args as ImageEdit; 
+            imageEdit = args as ImageEdit;
     }
-    private ImageEdit imageEdit;
-    private void OpenSignatureView() {
+   
+    private void OpenSignatureView()
+    {
         IsSignatureViewOpened = true;
     }
-    private void CloseSignatureView() {
+    private void CloseSignatureView()
+    {
         IsSignatureViewOpened = false;
     }
 
-    private async void InitFiles() {
+    private async void InitFiles()
+    {
         certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
         documentFullPath = await CopyWorkingFilesToAppData(defaultDocumentName);
     }
-    public async Task<string> CopyWorkingFilesToAppData(string fileName) {
+    public async Task<string> CopyWorkingFilesToAppData(string fileName)
+    {
         using Stream fileStream = await FileSystem.Current.OpenAppPackageFileAsync(fileName);
         string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
         using FileStream outputStream = File.OpenWrite(targetFile);
         fileStream.CopyTo(outputStream);
         return targetFile;
     }
-    async void SignPdf(byte[] signatureImage) {
+    async void SignPdf(byte[] signatureImage)
+    {
         CloseSignatureView();
         string signedPdfFullName = Path.Combine(FileSystem.Current.AppDataDirectory, Path.GetFileNameWithoutExtension(documentFullPath) + "_Signed1.pdf");
         IEnumerable<PdfFormFieldFacade> fields = GetDocumentFields();
@@ -105,7 +131,8 @@ public class MainPageViewModel : BindableBase {
         //var signatureField = fields.FirstOrDefault(f => f.Type == PdfFormFieldType.Signature) as PdfSignatureFormFieldFacade;
         var signatureField = fields.FirstOrDefault(_ => false);
         //if (signatureField == null) { 
-        if (true) {
+        if (true)
+        {
             //await Shell.Current.DisplayAlert("No Signature Fields Found", "A new signature field with a default position will be created", "OK");
         }
         else
@@ -125,7 +152,8 @@ public class MainPageViewModel : BindableBase {
         PdfAcroFormFacade acroForm = documentFacade.AcroForm;
         return acroForm.GetFields();
     }
-    PdfSignatureBuilder CreateUserSignature(string signatureFieldName, string password, string location, string contactInfo, string reason, byte[] signatureImage) {
+    PdfSignatureBuilder CreateUserSignature(string signatureFieldName, string password, string location, string contactInfo, string reason, byte[] signatureImage)
+    {
         var coord = imageEdit.GetCropAreaCoordinates();
         var dpiCorrection = 1.52;// 200 / 72;
         var left = coord.Left - coord.Width;
@@ -150,12 +178,14 @@ public class MainPageViewModel : BindableBase {
         userSignature.Location = location;
         userSignature.Name = contactInfo;
         userSignature.Reason = reason;
-        if (signatureImage != null) {
+        if (signatureImage != null)
+        {
             userSignature.SetImageData(signatureImage);
         }
         return userSignature;
     }
-    private void UpdatePreview() {
+    private void UpdatePreview()
+    {
         using Stream pdfStream = File.OpenRead(documentFullPath);
         var processor = new PdfDocumentProcessor() { RenderingEngine = PdfRenderingEngine.Skia };
         processor.LoadDocument(pdfStream);
@@ -168,25 +198,32 @@ public class MainPageViewModel : BindableBase {
 
         PdfPreview = (SKBitmapImageSource)img;
     }
-    private async void OpenFile() {
-        await PickAndShow(new PickOptions {
+    private async void OpenFile()
+    {
+        await PickAndShow(new PickOptions
+        {
             PickerTitle = "Select a PDF file",
             FileTypes = FilePickerFileType.Pdf
         });
     }
 
-    public async Task PickAndShow(PickOptions options) {
-        try {
+    public async Task PickAndShow(PickOptions options)
+    {
+        try
+        {
             var result = await FilePicker.Default.PickAsync(options);
-            if (result != null) {
-                if (result.FileName.EndsWith("pdf", StringComparison.OrdinalIgnoreCase)) {
+            if (result != null)
+            {
+                if (result.FileName.EndsWith("pdf", StringComparison.OrdinalIgnoreCase))
+                {
                     var stream = await result.OpenReadAsync();
                     documentFullPath = result.FullPath;
                     UpdatePreview();
                 }
             }
         }
-        catch {
+        catch
+        {
             // The user canceled or something went wrong
         }
 

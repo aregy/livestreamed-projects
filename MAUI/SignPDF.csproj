@@ -47,4 +47,12 @@
     <PackageReference Include="DevExpress.Pdf.SkiaRenderer" Version="23.2.*" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.3" />
   </ItemGroup>
+  <ItemGroup>
+    <MauiXaml Update="Views\NewPage1.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Views\NewPage2.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
 </Project>

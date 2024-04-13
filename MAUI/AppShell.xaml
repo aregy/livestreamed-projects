@@ -8,7 +8,7 @@
 
     <ShellContent
         Title="Fill PDF Form"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        ContentTemplate="{DataTemplate local:NewPage1}"
+        Route="NewPage" />
 
 </Shell>
