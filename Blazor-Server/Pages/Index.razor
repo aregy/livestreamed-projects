@@ -89,7 +89,7 @@
                 var jsonStr = await response.Content.ReadAsStringAsync();
                 list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
             });
-
+        this.Data.Clear();
         if (list != null)
             list.ForEach(ft => this.Data.Add(ft));
     }
