@@ -1,26 +1,37 @@
-﻿@using DevExpress.Blazor
-@using DevExpress.Pdf
-@inject FileUrlStorageService _FileUrlStorageService
+﻿@page "/"
+@using System.IO
+@using devexBlazor.Data
+@inject IJSRuntime JS
+@inject IHttpClientFactory ClientFactory
+@inject devexBlazor.Data.FileUrlStorageService _FileUrlStorageService
 @inject NavigationManager _NavigationManager
-@inject IJSRuntime _JSRuntime
 
-@page "/"
-
-<PageTitle>Index</PageTitle>
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+@* @rendermode InteractiveServer *@
+<PageTitle>Home</PageTitle>
 
 
+<PageTitle>File Download 1</PageTitle>
+
+<h1>File Download Example 1</h1>
+<DxGrid Name Data="@Data" KeyboardNavigationEnabled="true">
+    <Columns>
+        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime"  DisplayFormat="D" Width="10%" />
+        <DxGridDataColumn FieldName="Name" Width="25%" />
+        <DxGridDataColumn FieldName="ServerPath" Width="*" />
+    </Columns>
+</DxGrid>
+<h3>@var1</h3>
+<button @onclick="DownloadFileFromStream">
+    Download File From Stream
+</button>
+<button @onclick="DlFile">Dl file</button>
 <div id="overviewDemoDropZone" class="card custom-drop-zone bg-light rounded-3 w-100 m-0">
     <span class="drop-file-icon mb-3"></span>
     <span>Drag and Drop File Here</span><span class="m-1">or</span>
     <button id="overviewDemoSelectButton" class="btn border-primary btn-primary m-1">Select File</button>
 </div>
 <DxUpload Name="ImageUpload"
-          UploadUrl="@GetUploadUrl("/api/Upload/UploadFile/")"
+          UploadUrl="@GetUploadUrl("/api/File/UploadFile/")"
           FileUploaded="@OnUploaded"
       ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
           FileUploadStarted="@OnStarted"
@@ -30,15 +41,10 @@ Welcome to your new app.
           ShowFileList="false"
           AllowedFileExtensions="@(new List<string> {".pdf"})">
 </DxUpload>
-<DxButton Visible="@_HasDownload" Text="Download file"
-          SelectedFilesChanged="@SelectedFilesChanged"
-          CssClass="mb3"
-          Enabled="@_HasDownload"
-          RenderStyle="@ButtonRenderStyle.Info"
-          Click="@((MouseEventArgs args) => DownloadPdf())" />
 
 @code {
-    string _FileName;
+    System.Collections.ObjectModel.ObservableCollection<FileTag> Data {get; set;} = new System.Collections.ObjectModel.ObservableCollection<FileTag>();
+    string? _FileName;
     bool _HasDownload = true;
     int _SelectedFilesCount;
 
@@ -60,28 +66,60 @@ Welcome to your new app.
         _FileName = e.FileInfo.Name;
         _HasDownload = true;
     }
-    void DownloadPdf()
+    async internal void DlFile()
     {
-        using (MemoryStream memoryStream = CreateAttachment())
+         var client = ClientFactory.CreateClient("MyApi");
+        try
         {
-            _JSRuntime.InvokeVoidAsync("downloadFile", "output.pdf", Convert.ToBase64String(memoryStream.ToArray()));
-        }
+            var response = await client.GetStreamAsync("api/File/Last");
+            var fileName = "log.pdf";
 
+            using var streamRef = new DotNetStreamReference(stream: response);
+
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        }
+        catch (Exception e)
+        {
+            var1 = 9999;
+        }
+        List<FileTag> list = null;
+        var res2 = await client.GetAsync("api/File/list")
+            .ContinueWith(async (t) =>  {
+                var response = t.Result;
+                var jsonStr = await response.Content.ReadAsStringAsync();
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+            });
+
+        if (list != null)
+            list.ForEach(ft => this.Data.Add(ft));
     }
-    MemoryStream CreateAttachment()
+    int var1 = 0;
+    private Stream GetFileStream()
     {
-        MemoryStream memoryStream = new MemoryStream();
-        using (PdfDocumentProcessor documentProcessor = new PdfDocumentProcessor())
+        try
         {
-            documentProcessor.LoadDocument($"wwwroot/uploads/{_FileName}");
-
-            while (documentProcessor.Document.Pages.Count > 1)
-            {
-                documentProcessor.DeletePage(1);
-            }
-            //
-            documentProcessor.SaveDocument(memoryStream); //
+            var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/favicon.png");
+            var st = File.OpenRead(p.ToString());
+            return st;
         }
-        return memoryStream;
+        catch (Exception ex)
+        {
+
+        }
+        var randomBinaryData = new byte[50 * 1024];
+        var fileStream = new MemoryStream(randomBinaryData);
+
+        return fileStream;
+    }
+
+    private async Task DownloadFileFromStream()
+    {
+        var1++;
+        var fileStream = GetFileStream();
+        var fileName = "log.png";
+
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 }

@@ -13,14 +13,73 @@ public class ChunkMetadata
     public string? FileGuid { get; set; }
 }
 [Route("api/[controller]")]
-public class UploadController : Controller
+public class FileController : Controller
 {
     private readonly IWebHostEnvironment _HostingEnvironment;
     FileUrlStorageService _FileUrlStorageService;
-    public UploadController(IWebHostEnvironment hostingEnvironment, FileUrlStorageService fileUrlStorageService)
+    public FileController(IWebHostEnvironment hostingEnvironment, FileUrlStorageService fileUrlStorageService)
     {
         _HostingEnvironment = hostingEnvironment;
         _FileUrlStorageService = fileUrlStorageService;
+    }
+    [HttpGet]
+    [Route("GetFile")]
+    [DisableRequestSizeLimit]
+    public FileStreamResult GetFile()
+    {
+        try
+        {
+            var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/2004-accord.pdf");
+            var st = System.IO.File.OpenRead(p.ToString());
+            return new FileStreamResult(st, "application/pdf");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("GetFile() exceiption thrown");
+        }
+    }
+    [HttpGet]
+    [Route("Last")]
+    [DisableRequestSizeLimit]
+    public FileStreamResult Last()
+    {
+        try
+        {
+            
+            var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            DirectoryInfo directoryInfo = new DirectoryInfo(p);
+            if (!directoryInfo.Exists) throw new Exception();
+            var files = directoryInfo.GetFiles("*.pdf").OrderBy(f => f.CreationTime).ToList();
+            var st = System.IO.File.OpenRead(files.Last().FullName);
+            return new FileStreamResult(st, "application/pdf");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("GetFile() exceiption thrown");
+        }
+    }
+    [HttpGet]
+    [Route("List")]
+    [DisableRequestSizeLimit]
+    public ActionResult<List<FileTag>> List()
+    {
+        try
+        {
+            
+            var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            DirectoryInfo directoryInfo = new DirectoryInfo(p);
+            if (!directoryInfo.Exists) throw new Exception();
+            var fileTags = directoryInfo.GetFiles("*.pdf").OrderBy(f => f.CreationTime)
+                    .Select(f => new FileTag{ Name = f.Name, ServerPath = f.FullName, LastWriteTime=f.LastWriteTime})
+                    .ToList();
+            //var st = System.IO.File.OpenRead(files.Last().FullName);
+            //return new FileStreamResult(st, "application/pdf");
+            return this.Ok(fileTags);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("List() exception thrown");
+        }
     }
 
     [HttpPost]
@@ -79,4 +138,3 @@ public class UploadController : Controller
         }
     }
 }
-
