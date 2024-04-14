@@ -1,0 +1,93 @@
+{
+  "Files": [
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\obj\\Debug\\net7.0\\scopedcss\\projectbundle\\devexBlazor.bundle.scp.css",
+      "PackagePath": "staticwebassets\\devexBlazor.bundle.scp.css"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\FONT-LICENSE",
+      "PackagePath": "staticwebassets\\css\\open-iconic"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\ICON-LICENSE",
+      "PackagePath": "staticwebassets\\css\\open-iconic"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\README.md",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\README.md"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\css\\open-iconic-bootstrap.min.css",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\css\\open-iconic-bootstrap.min.css"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\fonts\\open-iconic.eot",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\fonts\\open-iconic.eot"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\fonts\\open-iconic.otf",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\fonts\\open-iconic.otf"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\fonts\\open-iconic.svg",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\fonts\\open-iconic.svg"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\fonts\\open-iconic.ttf",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\fonts\\open-iconic.ttf"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\open-iconic\\font\\fonts\\open-iconic.woff",
+      "PackagePath": "staticwebassets\\css\\open-iconic\\font\\fonts\\open-iconic.woff"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\uploads\\231099e9-5690-4c68-a7a2-f94e402da6f4.tmp",
+      "PackagePath": "staticwebassets\\uploads\\231099e9-5690-4c68-a7a2-f94e402da6f4.tmp"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\uploads\\33db9134-a9e3-4406-9b77-3bfed03be004.tmp",
+      "PackagePath": "staticwebassets\\uploads\\33db9134-a9e3-4406-9b77-3bfed03be004.tmp"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\uploads\\Covetrus Questionnaire.pdf",
+      "PackagePath": "staticwebassets\\uploads\\Covetrus Questionnaire.pdf"
+    },
+    {
+      "Id": "c:\\Users\\aregy\\car\\livestreamed-projects\\Blazor-Server\\wwwroot\\uploads\\DevExtreme License Transfer.pdf",
+      "PackagePath": "staticwebassets\\uploads\\DevExtreme License Transfer.pdf"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.build.devexBlazor.props",
+      "PackagePath": "build\\devexBlazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildMultiTargeting.devexBlazor.props",
+      "PackagePath": "buildMultiTargeting\\devexBlazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildTransitive.devexBlazor.props",
+      "PackagePath": "buildTransitive\\devexBlazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.devexBlazor.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
