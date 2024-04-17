@@ -21,7 +21,7 @@ public class MainPageViewModel : BindableBase
     private ImageEdit imageEdit;
 
     #region fields
-    public List<string> Items { get; set; }
+    
 
     public ImageSource pdfPreview;
     const string defaultDocumentName = "JewelCityLetter.pdf";
@@ -82,15 +82,18 @@ public class MainPageViewModel : BindableBase
     }
     #endregion properties
     
+    HttpClient _httpClient;
     public MainPageViewModel()
     {
         InitFiles();
         UpdatePreview();
+        _httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5184/") };
         SignPdfCommand = new Command<byte[]>(SignPdf);
         OpenFileCommand = new Command(OpenFile);
         OpenSignatureViewCommand = new Command(OpenSignatureView);
         CloseSignatureViewCommand = new Command(CloseSignatureView);
         ImageLoadedCommand = new Command(OnImageLoaded);
+        
     }
     
     private void OnImageLoaded(object args)

@@ -18,8 +18,10 @@
         </Style>
     </ContentPage.Resources>
     <VerticalStackLayout>
-        <dxe:FilterChipGroup ItemsSource="{Binding PredefinedFilters}" SelectedItems="{Binding SelectedFilters, Mode=TwoWay}" x:Name="filtersChipGroup" IsMultiline="False" DisplayMember="DisplayText" Padding="10"/>
-        <dxcv:DXCollectionView ItemsSource="{Binding Documents}"
+        <Label Text="{Binding Items.Count}"/>
+        <!--<dxe:FilterChipGroup ItemsSource="{Binding PredefinedFilters}" SelectedItems="{Binding SelectedFilters, Mode=TwoWay}" x:Name="filtersChipGroup" IsMultiline="False" DisplayMember="DisplayText" Padding="10"/>-->
+        <dxcv:DXCollectionView ItemsSource="{Binding Items}"/>
+        <!--<dxcv:DXCollectionView ItemsSource="{Binding Documents}"
                                DisplayMember="Name"
                                TapCommand="{Binding TapCommand}"
                                IsPullToRefreshEnabled="True"
@@ -28,8 +30,8 @@
                                FilterString="{Binding Filter, Mode=TwoWay}">
             <dxcv:DXCollectionView.ItemTemplate>
                 <DataTemplate x:DataType="{x:Type local:DocumentViewModel}">
-                    <!--<dxcv:SwipeContainer >
-                        <dxcv:SwipeContainer.ItemView>-->
+                    --><!--<dxcv:SwipeContainer >
+                        <dxcv:SwipeContainer.ItemView>--><!--
                     <dx:DXBorder Style="{StaticResource cardStyle}" Margin="10,5">
                         <Grid ColumnDefinitions="*,Auto" RowSpacing="12" RowDefinitions="Auto,Auto" Padding="16" BackgroundColor="Transparent">
                             <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" Style="{StaticResource CardHeader}"/>
@@ -48,7 +50,7 @@
                         </Grid>
                     </dx:DXBorder>
 
-                    <!--<dx:DXStackLayout Margin="0" ItemSpacing="0" BackgroundColor="{Binding ItemColor}">
+                    --><!--<dx:DXStackLayout Margin="0" ItemSpacing="0" BackgroundColor="{Binding ItemColor}">
                                 <Label Margin="20" Text="{Binding Description}"/>
                                 <BoxView Style="{StaticResource SeparatorStyle}"/>
                             </dx:DXStackLayout>-->
@@ -70,9 +72,9 @@
                             </dxcv:SwipeItem>
 
                         </dxcv:SwipeContainer.EndSwipeItems>
-                    </dxcv:SwipeContainer>-->
+                    </dxcv:SwipeContainer>--><!--
                 </DataTemplate>
             </dxcv:DXCollectionView.ItemTemplate>
-        </dxcv:DXCollectionView>
+        </dxcv:DXCollectionView>-->
     </VerticalStackLayout>
 </ContentPage>

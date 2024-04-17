@@ -1,6 +1,7 @@
 ﻿
 using DevExpress.Maui.Core;
 using DevExpress.Pdf.Native.BouncyCastle.Asn1.Pkcs;
+using SignPDF.Data;
 using SignPDF.Views;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,7 @@ namespace SignPDF.ViewModels
     }
     internal class NavigationViewModel : BindableBase
     {
+        public string Describer { get; set; } = "One Family";
         public void Add()
         {
 
@@ -165,7 +167,7 @@ namespace SignPDF.ViewModels
             }
 
         }
-
+        public List<string> Items { get; set; } = new List<string>();
         public ICommand TapCommand { get; set; }
 
         public NavigationViewModel()
@@ -184,6 +186,25 @@ namespace SignPDF.ViewModels
             };
             SelectedFilters.ListChanged += SelectedFiltersChanged;
             TapCommand = new Command<DocumentViewModel>(DXCollectionView_Tap);
+            System.Net.Http.HttpClient client = new HttpClient();
+            
+            using (Stream s = client.GetStreamAsync("http://10.0.2.2:5184/api/File/List").Result)
+            using (StreamReader sr = new StreamReader(s))
+            using (Newtonsoft.Json.JsonReader reader = new Newtonsoft.Json.JsonTextReader(sr))
+            {   
+                Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
+
+                // read the json from a stream
+                // json size doesn't matter because only a small piece is read at a time from the HTTP request
+                var p = serializer.Deserialize<List<FileTag>>(reader);
+                this.Items.Clear();
+                foreach (var k in p)
+                {
+                    Console.WriteLine(k.Name, k.ServerPath);
+                    Items.Add(k.Name.ToString());
+                }
+
+            }
         }
 
     }
