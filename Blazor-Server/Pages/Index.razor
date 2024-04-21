@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.IO
+@using System.Collections.ObjectModel
 @using devexBlazor.Data
 @inject IJSRuntime JS
 @inject IHttpClientFactory ClientFactory
@@ -13,11 +14,11 @@
 <PageTitle>File Download 1</PageTitle>
 
 <h1>File Download Example 1</h1>
-<DxGrid Name Data="@Data" KeyboardNavigationEnabled="true">
+<DxGrid id="dxGrid1" Data="@Data" KeyboardNavigationEnabled="true">
     <Columns>
         <DxGridDataColumn Caption="Date" FieldName="LastWriteTime"  DisplayFormat="D" Width="10%" />
-        <DxGridDataColumn FieldName="Name" Width="25%" />
-        <DxGridDataColumn FieldName="ServerPath" Width="*" />
+        <DxGridDataColumn FieldName="Id" Width="25%" />
+        <DxGridDataColumn FieldName="Name" Width="*" />
     </Columns>
 </DxGrid>
 <h3>@var1</h3>
@@ -43,7 +44,7 @@
 </DxUpload>
 
 @code {
-    System.Collections.ObjectModel.ObservableCollection<FileTag> Data {get; set;} = new System.Collections.ObjectModel.ObservableCollection<FileTag>();
+    ObservableCollection<FileTag> Data {get; set;} = new ObservableCollection<FileTag>();
     string? _FileName;
     bool _HasDownload = true;
     int _SelectedFilesCount;
@@ -68,7 +69,7 @@
     }
     async internal void DlFile()
     {
-         var client = ClientFactory.CreateClient("MyApi");
+        var client = ClientFactory.CreateClient("MyApi");
         try
         {
             var response = await client.GetStreamAsync("api/File/Last");
@@ -91,7 +92,7 @@
             });
         this.Data.Clear();
         if (list != null)
-            list.ForEach(ft => this.Data.Add(ft));
+            foreach (var k in list) this.Data.Add(k);
     }
     int var1 = 0;
     private Stream GetFileStream()

@@ -21,11 +21,17 @@ public class FileController : Controller
     {
         _HostingEnvironment = hostingEnvironment;
         _FileUrlStorageService = fileUrlStorageService;
+        //Path.Combine(Directory.GetCurrentDirectory, "wwwroot/uploads")
+        var directoryInfo = new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads").ToString());
+        if (!directoryInfo.Exists) throw new FileNotFoundException();
+        foreach (var file in directoryInfo.GetFiles("*.pdf"))
+        {
+            _FileUrlStorageService.Add(new FileTag() { Id = new Guid(), LastWriteTime = file.LastWriteTime, Name = file.Name });
+        }
     }
-    [HttpGet]
-    [Route("GetFile")]
+    [HttpGet("{id}")]
     [DisableRequestSizeLimit]
-    public FileStreamResult GetFile()
+    public FileStreamResult GetFile(Guid id)
     {
         try
         {
@@ -65,13 +71,14 @@ public class FileController : Controller
     {
         try
         {
-            
-            var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-            DirectoryInfo directoryInfo = new DirectoryInfo(p);
-            if (!directoryInfo.Exists) throw new Exception();
-            var fileTags = directoryInfo.GetFiles("*.pdf").OrderBy(f => f.CreationTime)
-                    .Select(f => new FileTag{ Name = f.Name, ServerPath = f.FullName, LastWriteTime=f.LastWriteTime})
-                    .ToList();
+
+            //var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            //DirectoryInfo directoryInfo = new DirectoryInfo(p);
+            //if (!directoryInfo.Exists) throw new Exception();
+            //var fileTags = directoryInfo.GetFiles("*.pdf").OrderBy(f => f.CreationTime)
+            //        .Select(f => new FileTag{ Name = f.Name, LastWriteTime=f.LastWriteTime})
+            //        .ToList();
+            var fileTags = _FileUrlStorageService.List();
             //var st = System.IO.File.OpenRead(files.Last().FullName);
             //return new FileStreamResult(st, "application/pdf");
             return this.Ok(fileTags);
@@ -105,7 +112,8 @@ public class FileController : Controller
                 if (metadataObject.Index == (metadataObject.TotalCount - 1))
                 {
                     ProcessUploadedFile(tempFilePath, metadataObject.FileName);
-                    _FileUrlStorageService.Add(Guid.Parse(metadataObject.FileGuid), @"uploads\" + metadataObject.FileName);
+                    _FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = @"uploads\" + metadataObject.FileName, LastWriteTime = DateTime.Now });
+
                 }
             }
         }
