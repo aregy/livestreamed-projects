@@ -1,6 +1,7 @@
-namespace devexBlazor.Data;
+﻿namespace SignPDF.Data;
 
-public class FileTag {
+public class FileTag
+{
     public Guid Id { get; set; }
     public string Name { get; set; }
     public DateTime LastWriteTime { get; set; }

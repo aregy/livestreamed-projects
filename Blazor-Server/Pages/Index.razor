@@ -16,7 +16,7 @@
 <h1>File Download Example 1</h1>
 <DxGrid id="dxGrid1" Data="@Data" KeyboardNavigationEnabled="true">
     <Columns>
-        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime"  DisplayFormat="D" Width="10%" />
+        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime" DisplayFormat="D" Width="10%" />
         <DxGridDataColumn FieldName="Id" Width="25%" />
         <DxGridDataColumn FieldName="Name" Width="*" />
     </Columns>
@@ -34,7 +34,7 @@
 <DxUpload Name="ImageUpload"
           UploadUrl="@GetUploadUrl("/api/File/UploadFile/")"
           FileUploaded="@OnUploaded"
-      ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
+          ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
           FileUploadStarted="@OnStarted"
           ExternalDropZoneCssSelector="#overviewDemoDropZone"
           ExternalDropZoneDragOverCssClass="bg-light border-secondary text-dark"
@@ -44,7 +44,7 @@
 </DxUpload>
 
 @code {
-    ObservableCollection<FileTag> Data {get; set;} = new ObservableCollection<FileTag>();
+    ObservableCollection<FileTag> Data { get; set; } = new ObservableCollection<FileTag>();
     string? _FileName;
     bool _HasDownload = true;
     int _SelectedFilesCount;
@@ -69,11 +69,21 @@
     }
     async internal void DlFile()
     {
-        var client = ClientFactory.CreateClient("MyApi");
         try
         {
-            var response = await client.GetStreamAsync("api/File/Last");
-            var fileName = "log.pdf";
+            List<FileTag> list = null;
+            var httpClient = ClientFactory.CreateClient("MyApi");
+            var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) =>
+                {
+                    var response = t.Result;
+                    var jsonStr = await response.Content.ReadAsStringAsync();
+                    list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+                });
+            this.Data.Clear();
+            if (list != null)
+                foreach (var k in list) this.Data.Add(k);
+            var response = await httpClient.GetStreamAsync($"api/File/{list.Last().Id}");
+            var fileName = list.Last().Name;
 
             using var streamRef = new DotNetStreamReference(stream: response);
 
@@ -83,16 +93,7 @@
         {
             var1 = 9999;
         }
-        List<FileTag> list = null;
-        var res2 = await client.GetAsync("api/File/list")
-            .ContinueWith(async (t) =>  {
-                var response = t.Result;
-                var jsonStr = await response.Content.ReadAsStringAsync();
-                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
-            });
-        this.Data.Clear();
-        if (list != null)
-            foreach (var k in list) this.Data.Add(k);
+
     }
     int var1 = 0;
     private Stream GetFileStream()
