@@ -12,8 +12,12 @@
              BackgroundColor="#bcbcbc"
              Title="Sign PDF File">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Open"
-                     Command="{Binding OpenFileCommand}" />
+        <!--<ToolbarItem Text="Open"
+                     Command="{Binding OpenFileCommand}" />-->
+        <ToolbarItem Text="Prev"
+                     Command="{Binding IncrementPageCommand}" />
+        <ToolbarItem Text="Next"
+                     Command="{Binding IncrementPageCommand}" />
     </ContentPage.ToolbarItems>
     <!--<ContentPage.BindingContext>
         <viewmodels:MainPageViewModel"/>

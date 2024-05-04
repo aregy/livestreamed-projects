@@ -1,6 +1,9 @@
-﻿namespace devexBlazor.Data;
+﻿using System;
+
+namespace devexBlazor.Data;
 
 public class FileUrlStorageService {
+    private Random _random = new Random((int)DateTime.Now.Ticks);
     private Dictionary<Guid, FileTag> _FileUrlStorageStorage = new Dictionary<Guid, FileTag>();
     private string _rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
 
@@ -16,7 +19,7 @@ public class FileUrlStorageService {
         var directoryInfo = new DirectoryInfo(_rootPath);
         if (!directoryInfo.Exists) throw new FileNotFoundException();
         foreach (var file in directoryInfo.GetFiles("*.pdf")) {
-            Add(new FileTag() { Id = Guid.NewGuid(), LastWriteTime = file.LastWriteTime, Name = file.Name });
+            Add(new FileTag() { Id = Guid.NewGuid(), LastWriteTime = file.LastWriteTime, Name = file.Name, SignStatus = (SignStatus)_random.Next(0, 2) });
         }
     }
 

@@ -89,11 +89,9 @@ public class NavigationViewModel : BindableBase {
             string fileName = "yetAnotherDoc.pdf";
             var address = $"http://10.0.2.2:{MauiProgram.PORT}/api/File/{documentViewModel.Id}";
             string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
-            //using (Stream s = _httpClient.GetStreamAsync(address, HttpCompletionOption.ResponseHeadersRead).Result)
-            //var httpResponse = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+
             var httpResponse = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead);
             using (var fileStream = System.IO.File.OpenWrite(targetFile)) { //(targetFile, FileMode.Create)) {
-                //s.CopyTo(fileStream);
                 var streamToReadFrom = await httpResponse.Content.ReadAsStreamAsync();// CopyToAsync(fileStream);
                 await streamToReadFrom.CopyToAsync(fileStream);
                 //certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
@@ -104,15 +102,17 @@ public class NavigationViewModel : BindableBase {
                 //page = (Page)Activator.CreateInstance(typeof(SignPage), documentViewModel.Id);
                 //var address = $"{typeof(SignPage).Name}?id=${documentViewModel.Id}";
 
-                Shell.Current.GoToAsync(nameof(SignPage), true, new Dictionary<string, object>
+                await Shell.Current.GoToAsync(nameof(SignPage), true, new Dictionary<string, object>
             {
                 { "FileName", fileName }
-            });//(address);
-               //Shell.Current.GoToAsync($"{nameof(SignPage)}");
+            });
 
             }
             else {
-                //page = (Page)Activator.CreateInstance(typeof(NewPage2));
+                await Shell.Current.GoToAsync(nameof(ViewPage), true, new Dictionary<string, object>
+            {
+                { "FileName", fileName }
+            });
             }
         }
         catch (Exception e) {

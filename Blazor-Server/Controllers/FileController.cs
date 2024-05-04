@@ -68,7 +68,7 @@ public class FileController : Controller {
 
                 if (metadataObject.Index == (metadataObject.TotalCount - 1)) {
                     ProcessUploadedFile(tempFilePath, metadataObject.FileName);
-                    _FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = @"uploads\" + metadataObject.FileName, LastWriteTime = DateTime.Now });
+                    _FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = @"uploads\" + metadataObject.FileName, LastWriteTime = DateTime.Now, SignStatus = 0});
 
                 }
             }

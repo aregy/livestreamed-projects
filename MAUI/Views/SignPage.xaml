@@ -13,8 +13,12 @@
              BackgroundColor="#bcbcbc"
              Title="Sign PDF File">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Open"
-                     Command="{Binding OpenFileCommand}" />
+        <!--<ToolbarItem Text="Open"
+                     Command="{Binding OpenFileCommand}" />-->
+        <ToolbarItem Text="Prev"
+                     Command="{Binding IncrementPageCommand}" />
+        <ToolbarItem Text="Next"
+                     Command="{Binding IncrementPageCommand}" />
     </ContentPage.ToolbarItems>
     <Grid RowDefinitions="*,Auto">
         <local:PinchAndPanContainer>
@@ -58,7 +62,7 @@
                      ScrimColor="#50505050"
                      AllowScrim="true">
             <Grid RowDefinitions="*,Auto">
-                <!--<toolkit:DrawingView IsMultiLineModeEnabled="True"
+                <toolkit:DrawingView IsMultiLineModeEnabled="True"
                                      Background="White"
                                      Lines="{Binding Source={RelativeSource Self}, Path=SignatureLines, Mode=TwoWay}"
                                      x:Name="signatureDrawer"
@@ -68,7 +72,7 @@
                         <local:DrawingViewMVVMBehavior x:Name="drawingMvvmBehavior"
                                                        DrawingAcceptedCommand="{Binding SignPdfCommand}" />
                     </toolkit:DrawingView.Behaviors>
-                </toolkit:DrawingView>-->
+                </toolkit:DrawingView>
                 <dx:DXButton Content="&#8634;"
                              Command="{Binding Source={x:Reference drawingMvvmBehavior}, Path=ClearCommand}"
                              VerticalOptions="Start"

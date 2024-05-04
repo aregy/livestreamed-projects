@@ -51,7 +51,15 @@ public class PdfViewModel : BindableBase {
     public ICommand SignPdfCommand {
         get; set;
     }
-    public ICommand OpenFileCommand {
+    //public ICommand OpenFileCommand {
+    //    get;
+    //    set;
+    //}
+    public ICommand IncrementPageCommand {
+        get;
+        set;
+    }
+    public ICommand DecrementPageCommand {
         get;
         set;
     }
@@ -78,6 +86,8 @@ public class PdfViewModel : BindableBase {
         //OpenSignatureViewCommand = new Command(OpenSignatureView);
         //CloseSignatureViewCommand = new Command(CloseSignatureView);
         //ImageLoadedCommand = new Command(OnImageLoaded);
+        DecrementPageCommand = new Command(DecrementPage);
+        IncrementPageCommand = new Command(IncrementPage);
     }
     private void OnImageLoaded(object args) {
         if (args is ImageEdit)
@@ -189,12 +199,22 @@ public class PdfViewModel : BindableBase {
         PdfPreview = (SKBitmapImageSource)img;
     }
 
-    private async void OpenFile() {
-        await PickAndShow(new PickOptions
-        {
-            PickerTitle = "Select a PDF file",
-            FileTypes = FilePickerFileType.Pdf
-        });
+    //private async void OpenFile() {
+    //    await PickAndShow(new PickOptions
+    //    {
+    //        PickerTitle = "Select a PDF file",
+    //        FileTypes = FilePickerFileType.Pdf
+    //    });
+    //}
+
+    private void DecrementPage() {
+        if (PageNumber > 1)
+            PageNumber--;
+        UpdatePreview();
+    }
+    private void IncrementPage() {
+        PageNumber++;
+        UpdatePreview();
     }
     public async Task PickAndShow(PickOptions options) {
         try {
