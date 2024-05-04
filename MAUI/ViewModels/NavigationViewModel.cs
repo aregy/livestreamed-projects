@@ -8,9 +8,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+//using ThreadNetwork;
 namespace SignPDF.ViewModels;
 public class NavigationViewModel : BindableBase {
     public ObservableCollection<FilterItem> PredefinedFilters {
@@ -82,18 +84,46 @@ public class NavigationViewModel : BindableBase {
         else
             Filter = string.Empty;
     }
-    private void DXCollectionView_Tap(DocumentViewModel documentViewModel) {
-        //Page page;
-        if (documentViewModel.Status == SignStatus.Requested) {
-            //page = (Page)Activator.CreateInstance(typeof(MainPage), documentViewModel.Id);
-            Shell.Current.GoToAsync($"{nameof(SignPage)}?Id=${documentViewModel.Id}");
+    private async void DXCollectionView_Tap(DocumentViewModel documentViewModel) {
+        try {
+            string fileName = "yetAnotherDoc.pdf";
+            var address = $"http://10.0.2.2:{MauiProgram.PORT}/api/File/{documentViewModel.Id}";
+            string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+            //using (Stream s = _httpClient.GetStreamAsync(address, HttpCompletionOption.ResponseHeadersRead).Result)
+            //var httpResponse = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            var httpResponse = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead);
+            using (var fileStream = System.IO.File.OpenWrite(targetFile)) { //(targetFile, FileMode.Create)) {
+                //s.CopyTo(fileStream);
+                var streamToReadFrom = await httpResponse.Content.ReadAsStreamAsync();// CopyToAsync(fileStream);
+                await streamToReadFrom.CopyToAsync(fileStream);
+                //certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
+                //documentFullPath = await CopyWorkingFilesToAppData(fileName);
+            }
+            Page page;
+            if (documentViewModel.Status == SignStatus.Requested) {
+                //page = (Page)Activator.CreateInstance(typeof(SignPage), documentViewModel.Id);
+                //var address = $"{typeof(SignPage).Name}?id=${documentViewModel.Id}";
+
+                Shell.Current.GoToAsync(nameof(SignPage), true, new Dictionary<string, object>
+            {
+                { "FileName", fileName }
+            });//(address);
+               //Shell.Current.GoToAsync($"{nameof(SignPage)}");
+
+            }
+            else {
+                //page = (Page)Activator.CreateInstance(typeof(NewPage2));
+            }
         }
-        else {
-            //page = (Page)Activator.CreateInstance(typeof(NewPage2));
+        catch (Exception e) {
+
         }
+
     }
     public List<string> Items { get; set; } = new List<string>();
     public ICommand TapCommand { get; set; }
+
+    public HttpClient _httpClient;
     public NavigationViewModel() {
         _Documents = new List<DocumentViewModel>();
         PullToRefreshCommand = new Command(ExecutePullToRefreshCommand);
@@ -103,12 +133,13 @@ public class NavigationViewModel : BindableBase {
             };
         SelectedFilters.ListChanged += SelectedFiltersChanged;
         TapCommand = new Command<DocumentViewModel>(DXCollectionView_Tap);
-        System.Net.Http.HttpClient client = new HttpClient() { BaseAddress = new Uri("http://10.0.2.2:5184/") };
+        _httpClient = new HttpClient() { BaseAddress = new Uri("http://10.0.2.2:5184/") };
         try {
-        //var response = await client.GetAsync("api/File/List");
+            //var response = await client.GetAsync("api/File/List");
 
-        using (Stream s = client.GetStreamAsync($"http://10.0.2.2:{MauiProgram.PORT}/api/File/List").Result)
+            using (Stream s = _httpClient.GetStreamAsync($"http://10.0.2.2:{MauiProgram.PORT}/api/File/List").Result)
             //using (Stream s = client.GetStreamAsync("http://10.0.2.2:7290/api/File/List").Result)
+            //var dotNetStreamRef = new DotNetStreamReference(s);
             using (StreamReader sr = new StreamReader(s))
             using (Newtonsoft.Json.JsonReader reader = new Newtonsoft.Json.JsonTextReader(sr)) {
                 Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();

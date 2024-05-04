@@ -14,9 +14,13 @@ using System.Linq;
 using System.Diagnostics;
 using System.Text.Json;
 using SignPDF.Data;
+using Microsoft.Maui.Storage;
+using System.Net.NetworkInformation;
 namespace SignPDF.ViewModels;
-[QueryProperty(nameof(Id), nameof(Id))]
+
 public class PdfViewModel : BindableBase {
+    private string _fileName;
+    private DocumentViewModel _documentViewModel;
     private ImageEdit imageEdit;
     public ImageSource pdfPreview;
     const string defaultDocumentName = "JewelCityLetter.pdf";
@@ -63,17 +67,17 @@ public class PdfViewModel : BindableBase {
         get;
         set;
     }
-    public Guid Id { get; set; }
     HttpClient _httpClient;
-    public PdfViewModel(FileTag fileTag) {
-        InitFiles();
+    public PdfViewModel(string fileName) {
+        _fileName = fileName;
+        //_documentViewModel = documentViewModel;
+        LoadDocument();
         UpdatePreview();
-        _httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{MauiProgram.PORT}/") };
-        SignPdfCommand = new Command<byte[]>(SignPdf);
-        OpenFileCommand = new Command(OpenFile);
-        OpenSignatureViewCommand = new Command(OpenSignatureView);
-        CloseSignatureViewCommand = new Command(CloseSignatureView);
-        ImageLoadedCommand = new Command(OnImageLoaded);
+        //SignPdfCommand = new Command<byte[]>(SignPdf);
+        //OpenFileCommand = new Command(OpenFile);
+        //OpenSignatureViewCommand = new Command(OpenSignatureView);
+        //CloseSignatureViewCommand = new Command(CloseSignatureView);
+        //ImageLoadedCommand = new Command(OnImageLoaded);
     }
     private void OnImageLoaded(object args) {
         if (args is ImageEdit)
@@ -85,10 +89,32 @@ public class PdfViewModel : BindableBase {
     private void CloseSignatureView() {
         IsSignatureViewOpened = false;
     }
-    private async void InitFiles() {
-        certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
-        documentFullPath = await CopyWorkingFilesToAppData(defaultDocumentName);
-        //TODO
+    private async void LoadDocument() {
+        try {
+            Ping pingSender = new Ping();
+            PingReply reply = await pingSender.SendPingAsync("10.0.2.2");
+            if (reply.Status == IPStatus.Success) {
+                //...
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+        }
+        try {
+            documentFullPath = Path.Combine(FileSystem.Current.AppDataDirectory, _fileName);
+            //string fileName = "yetAnotherDoc.pdf";
+            //var address = $"http://10.0.2.2:{MauiProgram.PORT}/api/File/{_fileName}";
+            //string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+            //using (Stream s = _httpClient.GetStreamAsync($"http://10.0.2.2:{MauiProgram.PORT}/api/File/{_fileName}").Result)
+            //using (var fileStream = new FileStream(fileName, FileMode.Create)) {
+            //    s.CopyTo(fileStream);
+            //    certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
+            //    documentFullPath = await CopyWorkingFilesToAppData(fileName);
+            //}
+        }
+        catch (Exception e) {
+
+        }
     }
     public async Task<string> CopyWorkingFilesToAppData(string fileName) {
         using Stream fileStream = await FileSystem.Current.OpenAppPackageFileAsync(fileName);
@@ -162,6 +188,7 @@ public class PdfViewModel : BindableBase {
         var img = SKBitmap.Decode(previewImageStream);
         PdfPreview = (SKBitmapImageSource)img;
     }
+
     private async void OpenFile() {
         await PickAndShow(new PickOptions
         {
