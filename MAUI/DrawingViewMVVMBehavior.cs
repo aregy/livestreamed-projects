@@ -36,11 +36,11 @@ namespace SignPDF {
             ClearCommand = new Command(() => drawingView.Clear());
             AcceptDrawingCommand = new Command(AcceptDrawing);
         }
-        async void AcceptDrawing() {
+        public async void AcceptDrawing() {
             using Stream origJpgStream = await drawingView.GetImageStream(200, 200);
             origJpgStream.Seek(0, SeekOrigin.Begin);
             Microsoft.Maui.Graphics.IImage img = PlatformImage.FromStream(origJpgStream, ImageFormat.Jpeg);
-            if(DrawingAcceptedCommand != null) {
+            if (DrawingAcceptedCommand != null) {
                 DrawingAcceptedCommand.Execute(img.AsBytes(ImageFormat.Png));
             }
         }

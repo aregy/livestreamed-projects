@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.ServiceModel.Channels;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-//using ThreadNetwork;
+
 namespace SignPDF.ViewModels;
 public class NavigationViewModel : BindableBase {
     public ObservableCollection<FilterItem> PredefinedFilters {
@@ -23,39 +24,39 @@ public class NavigationViewModel : BindableBase {
         get;
         set;
     }
-    string filter;
+    string _filter;
     public string Filter {
         get {
-            return filter;
+            return _filter;
         }
         set {
-            filter = value;
+            _filter = value;
             RaisePropertiesChanged();
         }
     }
-    private IList<DocumentViewModel> _Documents;
+    private IList<DocumentViewModel> _documents;
     public IList<DocumentViewModel> Documents {
-        get { return _Documents; }
+        get { return _documents; }
         set {
-            if (_Documents != value) {
-                _Documents = value;
+            if (_documents != value) {
+                _documents = value;
                 OnPropertyChanged("Documents");
             }
         }
     }
-    bool isRefreshing = false;
+    bool _isRefreshing = false;
     public bool IsRefreshing {
-        get { return isRefreshing; }
+        get { return _isRefreshing; }
         set {
-            if (isRefreshing != value) {
-                isRefreshing = value;
+            if (_isRefreshing != value) {
+                _isRefreshing = value;
                 OnPropertyChanged("IsRefreshing");
             }
         }
     }
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler _PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string propertyName = "") {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        _PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
     ICommand pullToRefreshCommand = null;
     public ICommand PullToRefreshCommand {
@@ -85,67 +86,51 @@ public class NavigationViewModel : BindableBase {
             Filter = string.Empty;
     }
     private async void DXCollectionView_Tap(DocumentViewModel documentViewModel) {
-        try {
-            string fileName = "yetAnotherDoc.pdf";
-            var address = $"http://10.0.2.2:{MauiProgram.PORT}/api/File/{documentViewModel.Id}";
-            string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
 
-            var httpResponse = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead);
+        string fileName = documentViewModel.Name;
+        var address = $"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/api/File/{documentViewModel.Id}";
+        string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+        try {
+            var httpResponse = await _HttpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, address), HttpCompletionOption.ResponseHeadersRead);
             using (var fileStream = System.IO.File.OpenWrite(targetFile)) { //(targetFile, FileMode.Create)) {
                 var streamToReadFrom = await httpResponse.Content.ReadAsStreamAsync();// CopyToAsync(fileStream);
                 await streamToReadFrom.CopyToAsync(fileStream);
                 //certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
                 //documentFullPath = await CopyWorkingFilesToAppData(fileName);
             }
-            Page page;
-            if (documentViewModel.Status == SignStatus.Requested) {
-                //page = (Page)Activator.CreateInstance(typeof(SignPage), documentViewModel.Id);
-                //var address = $"{typeof(SignPage).Name}?id=${documentViewModel.Id}";
-
-                await Shell.Current.GoToAsync(nameof(SignPage), true, new Dictionary<string, object>
-            {
-                { "FileName", fileName }
-            });
-
-            }
-            else {
-                await Shell.Current.GoToAsync(nameof(ViewPage), true, new Dictionary<string, object>
-            {
-                { "FileName", fileName }
-            });
-            }
         }
         catch (Exception e) {
 
         }
+        Page page;
+        if (documentViewModel.Status == SignStatus.Requested) {
+            //page = (Page)Activator.CreateInstance(typeof(SignPage), documentViewModel.Id);
+            //var address = $"{typeof(SignPage).Name}?id=${documentViewModel.Id}";
 
+            await Shell.Current.GoToAsync(nameof(SignPage), true, new Dictionary<string, object>
+            {
+                { "FileName", fileName }
+            });
+
+        }
+        else {
+            await Shell.Current.GoToAsync(nameof(ViewPage), true, new Dictionary<string, object>
+            {
+                { "FileName", fileName }
+            });
+        }
     }
     public List<string> Items { get; set; } = new List<string>();
     public ICommand TapCommand { get; set; }
-
-    public HttpClient _httpClient;
-    public NavigationViewModel() {
-        _Documents = new List<DocumentViewModel>();
-        PullToRefreshCommand = new Command(ExecutePullToRefreshCommand);
-        SelectedFilters = new BindingList<FilterItem>();
-        PredefinedFilters = new ObservableCollection<FilterItem>() {
-                new FilterItem(){ DisplayText= "Pending", Filter = "[Status] == 0" }
-            };
-        SelectedFilters.ListChanged += SelectedFiltersChanged;
-        TapCommand = new Command<DocumentViewModel>(DXCollectionView_Tap);
-        _httpClient = new HttpClient() { BaseAddress = new Uri("http://10.0.2.2:5184/") };
+    public HttpClient _HttpClient;
+    private async Task FetchDocumentsAsync() {
+        _HttpClient = new HttpClient() { BaseAddress = new Uri($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/") };
         try {
-            //var response = await client.GetAsync("api/File/List");
-
-            using (Stream s = _httpClient.GetStreamAsync($"http://10.0.2.2:{MauiProgram.PORT}/api/File/List").Result)
-            //using (Stream s = client.GetStreamAsync("http://10.0.2.2:7290/api/File/List").Result)
-            //var dotNetStreamRef = new DotNetStreamReference(s);
+            using (Stream s = _HttpClient.GetStreamAsync($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/api/File/List").Result)
             using (StreamReader sr = new StreamReader(s))
             using (Newtonsoft.Json.JsonReader reader = new Newtonsoft.Json.JsonTextReader(sr)) {
                 Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-                // read the json from a stream
-                // json size doesn't matter because only a small piece is read at a time from the HTTP request
-                var fileTags = serializer.Deserialize<List<FileTag>>(reader);
+                var fileTags = serializer.Deserialize<List<ExFileTag>>(reader);
                 foreach (var fileTag in fileTags) {
                     Documents.Add(new DocumentViewModel() { Name = fileTag.Name, Status = fileTag.SignStatus, Id = fileTag.Id, SignedAt = fileTag.LastWriteTime, });
                 }
@@ -155,63 +140,16 @@ public class NavigationViewModel : BindableBase {
             Console.WriteLine(ex);
         }
     }
+    public NavigationViewModel() {
+        MauiProgram._NavigationViewModel = this;
+        _documents = new List<DocumentViewModel>();
+        PullToRefreshCommand = new Command(ExecutePullToRefreshCommand);
+        SelectedFilters = new BindingList<FilterItem>();
+        PredefinedFilters = new ObservableCollection<FilterItem>() {
+                new FilterItem(){ DisplayText= "Pending", Filter = "[Status] == 0" }
+            };
+        SelectedFilters.ListChanged += SelectedFiltersChanged;
+        TapCommand = new Command<DocumentViewModel>(DXCollectionView_Tap);
+        FetchDocumentsAsync();
+    }
 }
-//public class Task : INotifyPropertyChanged
-//{
-//    public string Description { get; private set; }
-//    bool isTaskCompleted;
-//    public bool IsTaskCompleted
-//    {
-//        get => isTaskCompleted;
-//        set
-//        {
-//            isTaskCompleted = value;
-//            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTaskCompleted)));
-//            UpdateState();
-//        }
-//    }
-//    Color itemColor;
-//    public Color ItemColor
-//    {
-//        get => itemColor;
-//        private set
-//        {
-//            itemColor = value;
-//            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ItemColor)));
-//        }
-//    }
-//    string actionText;
-//    public string ActionText
-//    {
-//        get => actionText;
-//        private set
-//        {
-//            actionText = value;
-//            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ActionText)));
-//        }
-//    }
-//    string actionIcon;
-//    public string ActionIcon
-//    {
-//        get => actionIcon;
-//        private set
-//        {
-//            actionIcon = value;
-//            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ActionIcon)));
-//        }
-//    }
-//    public ICommand ChangeStateCommand { get; }
-//    public event PropertyChangedEventHandler PropertyChanged;
-//    public Task(string description)
-//    {
-//        ChangeStateCommand = new Command(() => IsTaskCompleted = !IsTaskCompleted);
-//        Description = description;
-//        UpdateState();
-//    }
-//    void UpdateState()
-//    {
-//        ItemColor = IsTaskCompleted ? Color.FromArgb("#c6eccb") : Color.FromArgb("#e6e6e6");
-//        ActionText = IsTaskCompleted ? "To Do" : "Done";
-//        ActionIcon = IsTaskCompleted ? "uncompletetask" : "completetask";
-//    }
-//}

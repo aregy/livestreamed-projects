@@ -7,8 +7,10 @@ using SkiaSharp.Views.Maui.Controls.Hosting;
 namespace SignPDF;
 
 public static class MauiProgram {
-    public readonly static int PORT = 5184;
-    //public readonly static int PORT = 7290;
+    internal readonly static int PORT = 5184;
+    internal static readonly string BASE_ADDRESS = DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2" : "http://localhost";
+
+    public static NavigationViewModel _NavigationViewModel;
 
     public static MauiApp CreateMauiApp() {
         // DXDrawingEngine.ForceSkia();

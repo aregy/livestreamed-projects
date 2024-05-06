@@ -94,7 +94,7 @@
                                  TextColor="{AppThemeBinding Light=#FEFEFE, Dark={StaticResource Primary}}"
                                  Margin="4,0" />
                     <dx:DXButton Content="Sign PDF"
-                                 Command="{Binding Source={x:Reference drawingMvvmBehavior}, Path=AcceptDrawingCommand}"
+                                 Command="{Binding Source={x:Reference drawingMvvmBehavior}, Path=DrawingAcceptedCommand}"
                                  TextColor="{AppThemeBinding Light=#FEFEFE, Dark={StaticResource Primary}}"
                                  Margin="4,0" />
                 </dx:DXStackLayout>

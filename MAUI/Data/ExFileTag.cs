@@ -1,6 +1,6 @@
 ﻿namespace SignPDF.Data;
 
-public class FileTag
+public class ExFileTag
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

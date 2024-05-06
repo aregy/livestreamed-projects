@@ -23,7 +23,9 @@ public partial class SignPage : ContentPage
         }
         set {
             _fileName = value;
-            BindingContext = new PdfViewModel(_fileName);
+            BindingContext = new PdfViewModel(_fileName);            
+            (this.BindingContext as PdfViewModel)._ImageEdit = this.imageEdit1;
+            (this.BindingContext as PdfViewModel)._SignatureDrawer = this.signatureDrawer;
         }
     }
     public SignPage()
