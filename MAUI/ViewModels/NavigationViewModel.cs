@@ -16,24 +16,6 @@ using System.Windows.Input;
 
 namespace SignPDF.ViewModels;
 public class NavigationViewModel : BindableBase {
-    public ObservableCollection<FilterItem> PredefinedFilters {
-        get;
-        set;
-    }
-    public BindingList<FilterItem> SelectedFilters {
-        get;
-        set;
-    }
-    string _filter;
-    public string Filter {
-        get {
-            return _filter;
-        }
-        set {
-            _filter = value;
-            RaisePropertiesChanged();
-        }
-    }
     private IList<DocumentViewModel> _documents;
     public IList<DocumentViewModel> Documents {
         get { return _documents; }
@@ -58,33 +40,12 @@ public class NavigationViewModel : BindableBase {
     protected void OnPropertyChanged([CallerMemberName] string propertyName = "") {
         _PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
-    ICommand pullToRefreshCommand = null;
-    public ICommand PullToRefreshCommand {
-        get { return pullToRefreshCommand; }
-        set {
-            if (pullToRefreshCommand != value) {
-                pullToRefreshCommand = value;
-                OnPropertyChanged("PullToRefreshCommand");
-            }
-        }
-    }
-    void ExecutePullToRefreshCommand() {
-        Task.Run(() => {
-            Thread.Sleep(1000);
-            this.UpdateDocuments();
-            IsRefreshing = false;
-        });
+
+    void ExecuteRefresh() {
+        FetchDocumentsAsync();
+        IsRefreshing = false;
     }
     int _count = 0;
-    private void UpdateDocuments() {
-        //this._Documents.Add(new DocumentViewModel { Name = $"Doc #{++_count}", Status = (SignStatus)(_count % 3) });
-    }
-    private void SelectedFiltersChanged(object sender, ListChangedEventArgs e) {
-        if (SelectedFilters.Count > 0)
-            Filter = "[Status] == 0";
-        else
-            Filter = string.Empty;
-    }
     private async void DXCollectionView_Tap(DocumentViewModel documentViewModel) {
 
         string fileName = documentViewModel.Name;
@@ -120,35 +81,31 @@ public class NavigationViewModel : BindableBase {
             });
         }
     }
-    public List<string> Items { get; set; } = new List<string>();
     public ICommand TapCommand { get; set; }
-    public HttpClient _HttpClient;
+    public HttpClient _HttpClient = new HttpClient() { BaseAddress = new Uri($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/") };
     private async Task FetchDocumentsAsync() {
-        _HttpClient = new HttpClient() { BaseAddress = new Uri($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/") };
         try {
             using (Stream s = _HttpClient.GetStreamAsync($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/api/File/List").Result)
             using (StreamReader sr = new StreamReader(s))
             using (Newtonsoft.Json.JsonReader reader = new Newtonsoft.Json.JsonTextReader(sr)) {
                 Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
                 var fileTags = serializer.Deserialize<List<ExFileTag>>(reader);
+                Documents.Clear();
                 foreach (var fileTag in fileTags) {
                     Documents.Add(new DocumentViewModel() { Name = fileTag.Name, Status = fileTag.SignStatus, Id = fileTag.Id, SignedAt = fileTag.LastWriteTime, });
                 }
+                OnPropertyChanged("Documents");
             }
         }
         catch (AggregateException ex) {
             Console.WriteLine(ex);
         }
     }
+    public ICommand ExecuteRefreshCommand { get; set; }
     public NavigationViewModel() {
         MauiProgram._NavigationViewModel = this;
-        _documents = new List<DocumentViewModel>();
-        PullToRefreshCommand = new Command(ExecutePullToRefreshCommand);
-        SelectedFilters = new BindingList<FilterItem>();
-        PredefinedFilters = new ObservableCollection<FilterItem>() {
-                new FilterItem(){ DisplayText= "Pending", Filter = "[Status] == 0" }
-            };
-        SelectedFilters.ListChanged += SelectedFiltersChanged;
+        _documents = new ObservableCollection<DocumentViewModel>();
+        ExecuteRefreshCommand = new Command(ExecuteRefresh);
         TapCommand = new Command<DocumentViewModel>(DXCollectionView_Tap);
         FetchDocumentsAsync();
     }

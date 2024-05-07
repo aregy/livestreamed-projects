@@ -11,12 +11,12 @@
              x:Class="SignPDF.Views.SignPage"
              x:DataType="viewmodels:PdfViewModel"
              BackgroundColor="#bcbcbc"
-             Title="Sign PDF File">
+             Title="PDF View">
     <ContentPage.ToolbarItems>
         <!--<ToolbarItem Text="Open"
                      Command="{Binding OpenFileCommand}" />-->
         <ToolbarItem Text="Prev"
-                     Command="{Binding IncrementPageCommand}" />
+                     Command="{Binding DecrementPageCommand}" />
         <ToolbarItem Text="Next"
                      Command="{Binding IncrementPageCommand}" />
     </ContentPage.ToolbarItems>
@@ -41,6 +41,7 @@
             </local:PinchAndPanContainer>
         </local:PinchAndPanContainer>
         <dx:DXButton x:Name="dxButton1"
+                     IsVisible="{Binding IsSignable}"
                      Content="✍🏻"
                      FontSize="24"
                      Command="{Binding OpenSignatureViewCommand}"

@@ -12,7 +12,7 @@ public partial class ViewPage : ContentPage
         }
         set {
             _fileName = value;
-            BindingContext = new PdfViewModel(_fileName);
+            BindingContext = new PdfViewModel(_fileName, false);
         }
     }
     public ViewPage()

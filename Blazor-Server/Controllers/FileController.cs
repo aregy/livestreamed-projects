@@ -25,7 +25,7 @@ public class FileController : Controller {
             var fileTag = _FileUrlStorageService.Get(id);
             if (fileTag == null)
                 throw new FileNotFoundException();
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", 
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot",
                 fileTag.Name.StartsWith("uploads") ? "" : "uploads",  // TODO whence was this partial path added?
                 fileTag.Name);
             var fileStream = System.IO.File.OpenRead(filePath);
@@ -54,7 +54,7 @@ public class FileController : Controller {
     [HttpPost]
     [Route("UploadFile")]
     [DisableRequestSizeLimit]
-    public ActionResult UploadFile(IFormFile imageUpload, string chunkMetadata) {
+    public ActionResult UploadFile(IFormFile imageUpload, string chunkMetadata, SignStatus signStatus = 0) {
         var tempPath = Path.Combine(_HostingEnvironment.WebRootPath, "uploads");
         // Removes temporary files
         RemoveTempFilesAfterDelay(tempPath, new TimeSpan(0, 5, 0));
@@ -71,7 +71,7 @@ public class FileController : Controller {
                 if (metadataObject.Index == (metadataObject.TotalCount - 1)) {
                     ProcessUploadedFile(tempFilePath, metadataObject.FileName);
                     //_FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = @"uploads\" + metadataObject.FileName, LastWriteTime = DateTime.Now, SignStatus = 0});
-                    _FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = metadataObject.FileName, LastWriteTime = DateTime.Now, SignStatus = 0 });
+                    _FileUrlStorageService.Add(new FileTag() { Id = Guid.Parse(metadataObject.FileGuid), Name = metadataObject.FileName, LastWriteTime = DateTime.Now, SignStatus = signStatus, FileSize = metadataObject.FileSize / 1024 });
 
 
                 }

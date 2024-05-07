@@ -22,24 +22,14 @@
         </Style>
     </ContentPage.Resources>
     <VerticalStackLayout>
-        <dxe:FilterChipGroup ItemsSource="{Binding PredefinedFilters}"
-                             SelectedItems="{Binding SelectedFilters, Mode=TwoWay}"
-                             x:Name="filtersChipGroup"
-                             IsMultiline="False"
-                             DisplayMember="DisplayText"
-                             Padding="10" />
-        <!--<dxcv:DXCollectionView ItemsSource="{Binding Items}"/>-->
+        <dx:DXButton Padding="10"
+                     ButtonType="Text"
+                     Command="{Binding ExecuteRefreshCommand}">⟳ Refresh</dx:DXButton>
         <dxcv:DXCollectionView ItemsSource="{Binding Documents}"
                                DisplayMember="Name"
-                               TapCommand="{Binding TapCommand}"
-                               IsPullToRefreshEnabled="True"
-                               IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
-                               PullToRefreshCommand="{Binding PullToRefreshCommand}"
-                               FilterString="{Binding Filter, Mode=TwoWay}">
+                               TapCommand="{Binding TapCommand}">
             <dxcv:DXCollectionView.ItemTemplate>
                 <DataTemplate x:DataType="{x:Type local:DocumentViewModel}">
-                    <!--<dxcv:SwipeContainer >
-                        <dxcv:SwipeContainer.ItemView>-->
                     <dx:DXBorder Style="{StaticResource cardStyle}"
                                  Margin="10,5">
                         <Grid ColumnDefinitions="*,Auto"
@@ -83,29 +73,6 @@
                             </dx:DXBorder>
                         </Grid>
                     </dx:DXBorder>
-                    <!--<dx:DXStackLayout Margin="0" ItemSpacing="0" BackgroundColor="{Binding ItemColor}">
-                                <Label Margin="20" Text="{Binding Description}"/>
-                                <BoxView Style="{StaticResource SeparatorStyle}"/>
-                            </dx:DXStackLayout>-->
-                    <!--</dxcv:SwipeContainer.ItemView>
-
-                        <dxcv:SwipeContainer.StartSwipeItems>
-                            <dxcv:SwipeItem Caption="{Binding Name}"
-                            BackgroundColor="Green"
-                            Command="{Binding ChangeStateCommand}"/>
-                        </dxcv:SwipeContainer.StartSwipeItems>
-
-                        <dxcv:SwipeContainer.EndSwipeItems>
-                            <dxcv:SwipeItem Caption="Delete"
-                            BackgroundColor="Red"
-                            Image="deletetask">
-                                <dxcv:SwipeItem.Behaviors>
-                                    <toolkit:EventToCommandBehavior EventName="Tap" Command="{Binding TapCommand}"/>
-                                </dxcv:SwipeItem.Behaviors>
-                            </dxcv:SwipeItem>
-
-                        </dxcv:SwipeContainer.EndSwipeItems>
-                    </dxcv:SwipeContainer>-->
                 </DataTemplate>
             </dxcv:DXCollectionView.ItemTemplate>
         </dxcv:DXCollectionView>

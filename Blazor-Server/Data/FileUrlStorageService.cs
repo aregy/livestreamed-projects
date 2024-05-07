@@ -19,7 +19,7 @@ public class FileUrlStorageService {
         var directoryInfo = new DirectoryInfo(_rootPath);
         if (!directoryInfo.Exists) throw new FileNotFoundException();
         foreach (var file in directoryInfo.GetFiles("*.pdf")) {
-            Add(new FileTag() { Id = Guid.NewGuid(), LastWriteTime = file.LastWriteTime, Name = file.Name, SignStatus = 0  }); // (SignStatus)_random.Next(0, 2)
+            Add(new FileTag() { Id = Guid.NewGuid(), LastWriteTime = file.LastWriteTime, Name = file.Name, FileSize = (int)file.Length / 1024, SignStatus = file.Name.Contains("SIGNED") ? SignStatus.Signed : SignStatus.Requested  }); // (SignStatus)_random.Next(0, 2)
         }
     }
 

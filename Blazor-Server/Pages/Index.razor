@@ -6,29 +6,26 @@
 @inject IHttpClientFactory ClientFactory
 @inject devexBlazor.Data.FileUrlStorageService _FileUrlStorageService
 @inject NavigationManager _NavigationManager
+<style>
+    .signed-item > td {
+        background-color: rgba(57, 137, 20, 0.5);
+    }
 
+    .dl-label {
+        display: flex;
+        justify-content: center
+    }
+</style>
 @* @rendermode InteractiveServer *@
 <PageTitle>Home</PageTitle>
 
 
 <PageTitle>File Download 1</PageTitle>
-
 <h1>File Download Example 1</h1>
-<DxGrid id="dxGrid1" Data="@Data" KeyboardNavigationEnabled="true">
-    <Columns>
-        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime" DisplayFormat="D" Width="10%" />
-        <DxGridDataColumn FieldName="Id" Width="25%" />
-        <DxGridDataColumn FieldName="Name" Width="*" />
-    </Columns>
-</DxGrid>
-<h3>@var1</h3>
-<button @onclick="DownloadFileFromStream">
-    Download File From Stream
-</button>
-<button @onclick="DlFile">Dl file</button>
+
 <div id="overviewDemoDropZone" class="card custom-drop-zone bg-light rounded-3 w-100 m-0">
     <span class="drop-file-icon mb-3"></span>
-    <span>Drag and Drop File Here</span><span class="m-1">or</span>
+    <span class="dl-label">Drag and Drop File Here</span><span class="m-1 dl-label">or</span>
     <button id="overviewDemoSelectButton" class="btn border-primary btn-primary m-1">Select File</button>
 </div>
 <DxUpload Name="ImageUpload"
@@ -43,12 +40,40 @@
           AllowedFileExtensions="@(new List<string> {".pdf"})">
 </DxUpload>
 
+<button @onclick="DlFile">
+    Download File
+</button>
+<button @onclick="RefreshFileList">Refresh ⟳</button>
+<DxGrid @ref="@dxGrid1" Data="@Data" KeyboardNavigationEnabled="true" CustomizeElement="Grid_CustomizeElement">
+    <Columns>
+        <DxGridDataColumn FieldName="SignStatus" Width="10%" GroupIndex="0" Group />
+        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime" DisplayFormat="D" Width="10%" />
+        <DxGridDataColumn FieldName="FileSize" Width="10%" DisplayFormat="{0} KB" />
+        <DxGridDataColumn FieldName="Id" Width="25%" />
+        <DxGridDataColumn FieldName="Name" Width="*" />
+    </Columns>
+</DxGrid>
+<h3>@var1</h3>
+
 @code {
+    IGrid? dxGrid1;
     ObservableCollection<FileTag> Data { get; set; } = new ObservableCollection<FileTag>();
     string? _FileName;
     bool _HasDownload = true;
     int _SelectedFilesCount;
 
+    void Grid_CustomizeElement(GridCustomizeElementEventArgs e) {
+        if (e.ElementType == GridElementType.DataRow && (SignStatus)e.Grid.GetRowValue(e.VisibleIndex, "SignStatus") == SignStatus.Signed) {
+            e.CssClass = "signed-item";
+        }
+        if (e.ElementType == GridElementType.DataCell && e.Column.Name == "FileSize") {
+            e.Style = "font-weight: 800";
+        }
+        // if (e.ElementType == GridElementType.GroupRow && e.Column.Name == "Country") {
+        //     var summaryItems = e.Grid.GetGroupSummaryItems().Select(i => e.Grid.GetGroupSummaryDisplayText(i, e.VisibleIndex));
+        //     e.Attributes["title"] = string.Join(", ", summaryItems);
+        // }
+    }
     protected string GetUploadUrl(string url)
     {
         return _NavigationManager.ToAbsoluteUri(url).AbsoluteUri;
@@ -67,34 +92,29 @@
         _FileName = e.FileInfo.Name;
         _HasDownload = true;
     }
-    async internal void DlFile()
+    async internal void RefreshFileList()
     {
         try
         {
             List<FileTag> list = null;
             var httpClient = ClientFactory.CreateClient("MyApi");
             var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) =>
-                {
-                    var response = t.Result;
-                    var jsonStr = await response.Content.ReadAsStringAsync();
+            {
+                var response = t.Result;
+                var jsonStr = await response.Content.ReadAsStringAsync();
+                if (jsonStr != null)
                     list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
-                });
+            });
             this.Data.Clear();
             if (list != null)
                 foreach (var k in list) this.Data.Add(k);
-            var response = await httpClient.GetStreamAsync($"api/File/{list.Last().Id}");
-            var fileName = list.Last().Name;
-
-            using var streamRef = new DotNetStreamReference(stream: response);
-
-            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             var1 = 9999;
         }
-
-        }
+        dxGrid1.ExpandAllGroupRows();
+    }
     int var1 = 0;
     private Stream GetFileStream()
     {
@@ -114,14 +134,25 @@
         return fileStream;
     }
 
-    private async Task DownloadFileFromStream()
+    private async Task DlFile()
     {
-        var1++;
-        var fileStream = GetFileStream();
-        var fileName = "log.png";
+        try
+        {
+            var httpClient = ClientFactory.CreateClient("MyApi");
+            List<FileTag> list = null;
+            var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) => {
+                var response = t.Result;
+                var jsonStr = await response.Content.ReadAsStringAsync();
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+            });
+            var response = await httpClient.GetStreamAsync($"api/File/{list.Last().Id}");
+            var fileName = list.Last().Name;
 
-        using var streamRef = new DotNetStreamReference(stream: fileStream);
+            using var streamRef = new DotNetStreamReference(stream: response);
 
-        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        } catch (Exception) {
+            var1 = 888;
+        }
     }
 }

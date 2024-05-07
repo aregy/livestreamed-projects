@@ -5,7 +5,6 @@ using SkiaSharp;
 using System.Windows.Input;
 using DevExpress.Maui.Core;
 using DevExpress.Office.DigitalSignatures;
-//using GameKit;
 using DevExpress.Maui.Editors;
 using DevExpress.XtraCharts.Native;
 using System.Net.Http;
@@ -22,8 +21,8 @@ using DevExpress.Maui.Core.Internal;
 using Microsoft.Maui.Graphics.Platform;
 using Newtonsoft.Json;
 using System.IO;
-//using DevExpress.Blazor.Internal.Upload;
-//using DevExpress.Blazor.Upload.Internal;
+using System;
+using System.Text.Json.Serialization.Metadata;
 namespace SignPDF.ViewModels;
 
 public class PdfViewModel : BindableBase {
@@ -32,7 +31,7 @@ public class PdfViewModel : BindableBase {
     public ImageEdit _ImageEdit;
     public ImageSource _PdfPreview;
     public DrawingView _SignatureDrawer;
-    const string defaultDocumentName = "JewelCityLetter.pdf";
+    //const string defaultDocumentName = "JewelCityLetter.pdf";
     const string defaultCertificateName = "pfxCertificate.pfx";
     const string defaultCertificatePassword = "123";
     string certificateFullPath;
@@ -50,17 +49,6 @@ public class PdfViewModel : BindableBase {
     }
     private async void LoadDocument() {
         try {
-            Ping pingSender = new Ping();
-            PingReply reply = await pingSender.SendPingAsync($"{MauiProgram.BASE_ADDRESS}");
-            if (reply.Status == IPStatus.Success) {
-                //...
-            }
-        }
-        catch (Exception ex) {
-            Console.WriteLine(ex.Message);
-        }
-        try {
-            //documentFullPath = await CopyWorkingFilesToAppData(fileName);
             certificateFullPath = await CopyWorkingFilesToAppData(defaultCertificateName);
         }
         catch (Exception e) {
@@ -74,7 +62,6 @@ public class PdfViewModel : BindableBase {
         fileStream.CopyTo(outputStream);
         return targetFile;
     }
-    int i = 0;
     async void SignPdf(byte[] signatureImage) {
         using (var imageStream = await _SignatureDrawer.GetImageStream(200, 200)) {
             imageStream.Seek(0, SeekOrigin.Begin);
@@ -82,18 +69,12 @@ public class PdfViewModel : BindableBase {
             signatureImage = image.AsBytes(Microsoft.Maui.Graphics.ImageFormat.Png);
         }
         CloseSignatureView();
-        i++;
-        string pdfFileName2 = Path.Combine(Path.GetFileNameWithoutExtension(documentFullPath) + $"_Signed-{DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}-{i}.pdf");
+        var dateTime = DateTime.Now;
+        string pdfFileName2 = Path.Combine(Path.GetFileNameWithoutExtension(documentFullPath) + $"SIGNED_{String.Format("{0}{1}{2}", dateTime.Hour, dateTime.Minute, dateTime.Second)}.pdf");
         using var signer = new PdfDocumentSigner(documentFullPath);
         string signatureFieldName = null;
-
         var sig = CreateUserSignature(signatureFieldName, defaultCertificatePassword, "USA", "Jane Cooper", "Acknowledgement", signatureImage);
         signer.SaveDocument(Path.Combine(FileSystem.Current.AppDataDirectory, pdfFileName2), sig);
-
-        //using Stream pdfStream = File.OpenRead(documentFullPath);
-        //var processor = new PdfDocumentProcessor() { RenderingEngine = PdfRenderingEngine.Skia };
-        //processor.LoadDocument(pdfStream);
-        //
         _fileName = pdfFileName2;
         await UpdatePreview();
         try {
@@ -104,25 +85,22 @@ public class PdfViewModel : BindableBase {
         }
     }
     async Task UpdateServerAsync() {
-        //var selectedFile = new FileInputSelectedFile();
-        //selectedFile.Guid = Guid.NewGuid().ToString();
-        //selectedFile.Name = _fileName;
-        //selectedFile.LoadedBytes = 0;
-        var file = File.Open(documentFullPath, FileMode.Open);
-        int chunckSize = 20000;
-        //int chunckSize = 2097152; //2MB
-        int totalChunks = (int)(file.Length / chunckSize);
-        if (file.Length % chunckSize != 0) {
+        // From https://stackoverflow.com/a/53159296/11849530
+        using var file = File.OpenRead(documentFullPath);
+        int chunkSize = 20000; // taken from devexBlazor > Pages > Index.razor
+        int totalChunks = (int)(file.Length / chunkSize);
+        if (file.Length % chunkSize != 0) {
             totalChunks++;
         }
         var fileGuid = Guid.NewGuid();
         for (int i = 0; i < totalChunks; i++) {
-            long position = (i * (long)chunckSize);
-            int toRead = (int)Math.Min(file.Length - position, chunckSize);
+            long position = (i * (long)chunkSize);
+            int toRead = (int)Math.Min(file.Length - position, chunkSize);
             byte[] buffer = new byte[toRead];
             await file.ReadAsync(buffer, 0, buffer.Length);
 
             using (MultipartFormDataContent form = new MultipartFormDataContent()) {
+                form.Add(JsonContent.Create(SignStatus.Signed, JsonTypeInfo.CreateJsonTypeInfo(typeof(SignStatus), JsonSerializerOptions.Default)), "signStatus");
                 form.Add(new ByteArrayContent(buffer), "imageUpload", _fileName);
                 //form.Add(new StringContent(id.ToString()), "id");
                 var meta = JsonConvert.SerializeObject(new SignPDF.Data.ExChunkMetadata
@@ -135,7 +113,7 @@ public class PdfViewModel : BindableBase {
                 });
                 form.Add(new StringContent(meta), "chunkMetadata");
                 try {
-                    var response = await MauiProgram._NavigationViewModel._HttpClient.PostAsync($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/api/File/UploadFile", form);//.ConfigureAwait(false);
+                    var response = await MauiProgram._NavigationViewModel._HttpClient.PostAsync($"{MauiProgram.BASE_ADDRESS}:{MauiProgram.PORT}/api/File/UploadFile", form).ConfigureAwait(false);
                     if (!response.IsSuccessStatusCode) {
                         throw new NetworkInformationException();
                     }
@@ -144,47 +122,7 @@ public class PdfViewModel : BindableBase {
                 }
             }
         }
-
     }
-    //protected Task<bool> PerformFileUploadStartCoreAsync(FileInputSelectedFile file) {
-    //    var ChunkSize = 20000; // Given by ChunkSize = "20000" in my DevEvexBlazor > Index.razor file
-    //    var metadataArgs = new FileMetadataEventArgs
-    //    {
-    //        RequestOptions = new ChunkJSItem
-    //        {
-    //            FileName = file.Name,
-    //            FileSize = file.Size,
-    //            FileType = file.Type,
-    //            FileGuid = file.Guid,
-    //            LastModified = file.LastModified,
-    //            Index = ChunkSize > 0 ? Convert.ToInt64(file.LoadedBytes) / ChunkSize : 0,
-    //            TotalCount = ChunkSize > 0 ? Convert.ToInt64(file.Size / ChunkSize) : 1
-    //        }
-    //    };
-    //    ProcessCustomizeFormRequest(metadataArgs);
-    //    return Task.FromResult(true);
-    //}
-    //protected Dictionary<string, FileJSOptions> FilesOptions { get; set; } // TODO fill with Guids
-    //internal Func<ChunkMetadata, object> CustomizeFormData { get; set; } // TOOD fill with ChunkMetadatas
-
-    //void ProcessCustomizeFormRequest(FileMetadataEventArgs args) {
-    //    var chunkMetadata = new ChunkMetadata(args.RequestOptions);
-    //    var customData = CustomizeFormData?.Invoke(chunkMetadata);
-    //    FileJSOptions fileOptions = FilesOptions[args.RequestOptions.FileGuid];
-    //    fileOptions.CustomFormDataOptions = new
-    //    {
-    //        CustomData = customData,
-    //        FileGuid = chunkMetadata.UploadId,
-    //        ChunkIndex = chunkMetadata.Index
-    //    };
-    //}
-    //IEnumerable<PdfFormFieldFacade> GetDocumentFields() {
-    //    using var processor = new PdfDocumentProcessor();
-    //    processor.LoadDocument(documentFullPath);
-    //    PdfDocumentFacade documentFacade = processor.DocumentFacade;
-    //    PdfAcroFormFacade acroForm = documentFacade.AcroForm;
-    //    return acroForm.GetFields();
-    //}
     PdfSignatureBuilder CreateUserSignature(string signatureFieldName, string password, string location, string contactInfo, string reason, byte[] signatureImage) {
         var coord = _ImageEdit.GetCropAreaCoordinates();
         var dpiCorrection = 1.52;
@@ -199,7 +137,7 @@ public class PdfViewModel : BindableBase {
         Pkcs7Signer pkcs7Signature = new Pkcs7Signer(certificateFullPath, password, HashAlgorithmType.SHA256);
         PdfSignatureBuilder userSignature;
         if (signatureFieldName == null)
-            userSignature = new PdfSignatureBuilder(pkcs7Signature, new PdfSignatureFieldInfo(1) { SignatureBounds = new PdfRectangle(left, bottom, right, top) });
+            userSignature = new PdfSignatureBuilder(pkcs7Signature, new PdfSignatureFieldInfo(PageNumber) { SignatureBounds = new PdfRectangle(left, bottom, right, top) });
         else
             userSignature = new PdfSignatureBuilder(pkcs7Signature, signatureFieldName);
         userSignature.Location = location;
@@ -212,28 +150,33 @@ public class PdfViewModel : BindableBase {
         return userSignature;
     }
     private async Task UpdatePreview() {
-        using Stream pdfStream = File.OpenRead(documentFullPath);
-        var processor = new PdfDocumentProcessor() { RenderingEngine = PdfRenderingEngine.Skia };
-        processor.LoadDocument(pdfStream);
-        PageCount = processor.Document.Pages.Count;
-        DXBitmap image = processor.CreateDXBitmap(PageNumber, 1200);
-        using MemoryStream previewImageStream = new MemoryStream();
-        image.Save(previewImageStream, DXImageFormat.Png);
-        previewImageStream.Seek(0, SeekOrigin.Begin);
-        var img = SKBitmap.Decode(previewImageStream);
-        PdfPreview = (SKBitmapImageSource)img;
+        try {
+            using Stream pdfStream = File.OpenRead(documentFullPath);
+            var processor = new PdfDocumentProcessor() { RenderingEngine = PdfRenderingEngine.Skia };
+            processor.LoadDocument(pdfStream);
+            PageCount = processor.Document.Pages.Count;
+            DXBitmap image = processor.CreateDXBitmap(PageNumber, 1200);
+            using MemoryStream previewImageStream = new MemoryStream();
+            image.Save(previewImageStream, DXImageFormat.Png);
+            previewImageStream.Seek(0, SeekOrigin.Begin);
+            var img = SKBitmap.Decode(previewImageStream);
+            PdfPreview = (SKBitmapImageSource)img;
+        }
+        catch (Exception ex) {
+
+        }
     }
-    private void DecrementPage() {
+    async void DecrementPage() {
         if (PageNumber == 1)
             return;
         PageNumber--;
-        UpdatePreview();
+        await UpdatePreview();
     }
-    private void IncrementPage() {
+    async void IncrementPage() {
         if (PageNumber == PageCount)
             return;
         PageNumber++;
-        UpdatePreview();
+        await UpdatePreview();
     }
     public ImageSource PdfPreview {
         get {
@@ -278,8 +221,11 @@ public class PdfViewModel : BindableBase {
         set;
     }
     public int PageCount { get; private set; }
-    public PdfViewModel(string fileName) {
+
+    public bool IsSignable { get; set; }
+    public PdfViewModel(string fileName, bool isSignable) {
         _fileName = fileName;
+        IsSignable = isSignable;
         LoadDocument();
         UpdatePreview();
         SignPdfCommand = new Command<byte[]>(SignPdf);

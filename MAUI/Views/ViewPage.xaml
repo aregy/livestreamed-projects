@@ -10,7 +10,7 @@
              xmlns:viewmodels="clr-namespace:SignPDF.ViewModels"
              x:Class="SignPDF.Views.ViewPage"
              BackgroundColor="#bcbcbc"
-             Title="Sign PDF File">
+             Title="PDF View">
     <ContentPage.ToolbarItems>
         <!--<ToolbarItem Text="Open"
                      Command="{Binding OpenFileCommand}" />-->
@@ -37,6 +37,7 @@
             </local:PinchAndPanContainer>
         </local:PinchAndPanContainer>
         <dx:DXButton x:Name="dxButton1"
+                     IsVisible="{Binding IsSignable}"
                      Content="✍🏻"
                      FontSize="24"
                      Command="{Binding OpenSignatureViewCommand}"

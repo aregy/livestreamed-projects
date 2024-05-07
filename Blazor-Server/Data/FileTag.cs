@@ -5,5 +5,6 @@ public class FileTag {
     public string Name { get; set; }
     public DateTime LastWriteTime { get; set; }
     public SignStatus SignStatus { get; set; }
+    public int FileSize { get; set; } // in KB, matching Windows Explorer size format
 }
 public enum SignStatus { Requested, Declined, Signed }
