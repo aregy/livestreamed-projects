@@ -15,7 +15,7 @@
         <!--<ToolbarItem Text="Open"
                      Command="{Binding OpenFileCommand}" />-->
         <ToolbarItem Text="Prev"
-                     Command="{Binding IncrementPageCommand}" />
+                     Command="{Binding DecrementPageCommand}" />
         <ToolbarItem Text="Next"
                      Command="{Binding IncrementPageCommand}" />
     </ContentPage.ToolbarItems>
