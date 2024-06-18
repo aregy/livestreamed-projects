@@ -15,117 +15,201 @@
         display: flex;
         justify-content: center
     }
+
+    .pdf-box {
+        width: 950px;
+        height: 500px;
+    }
+
+    .print-btn {
+        mask-image: url(/images/pc.svg);
+        mask-repeat: no-repeat;
+        mask-size: 100%;
+        background-color: currentColor;
+        --toolbar-icon-size: 25px;
+    }
+
+    .targetContainer {
+        padding-left: 15px;
+    }
 </style>
-@* @rendermode InteractiveServer *@
 <PageTitle>Home</PageTitle>
 
+<div class="card-body p-0">
+    <div id="overviewDemoDropZone" class="card custom-drop-zone bg-light rounded-3 w-100 m-0">
+        <span class="drop-file-icon mb-3"></span>
+        <span class="dl-label">Drag and Drop File Here</span><span class="m-1 dl-label">or</span>
+        <button id="overviewDemoSelectButton" class="btn border-primary btn-primary m-1">Select File</button>
+    </div>
+    <DxUpload Name="ImageUpload"
+              UploadUrl="@GetUploadUrl("/api/File/UploadFile/")"
+              FileUploaded="@OnUploaded"
+              ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
+              FileUploadStarted="@OnStarted"
+              ExternalDropZoneCssSelector="#overviewDemoDropZone"
+              ExternalDropZoneDragOverCssClass="bg-light border-secondary text-dark"
+              ChunkSize="20000"
+              ShowFileList="false"
+              AllowedFileExtensions="@(new List<string> {".pdf"})">
+    </DxUpload>
 
-<PageTitle>File Download 1</PageTitle>
-<h1>File Download Example 1</h1>
-
-<div id="overviewDemoDropZone" class="card custom-drop-zone bg-light rounded-3 w-100 m-0">
-    <span class="drop-file-icon mb-3"></span>
-    <span class="dl-label">Drag and Drop File Here</span><span class="m-1 dl-label">or</span>
-    <button id="overviewDemoSelectButton" class="btn border-primary btn-primary m-1">Select File</button>
+    <button @onclick="DlFile">
+        Download File
+    </button>
+    <button @onclick="RefreshFileList">Refresh ⟳</button>
+    <DxGrid @ref="@dxGrid1" Data="@Data" KeyboardNavigationEnabled="true" CustomizeElement="Grid_CustomizeElement">
+        <Columns>
+            <DxGridDataColumn FieldName="SignStatus" Width="10%" GroupIndex="0" Group />
+            <DxGridDataColumn Caption="Date" FieldName="LastWriteTime" DisplayFormat="D" Width="10%" />
+            <DxGridDataColumn FieldName="FileSize" Width="10%" DisplayFormat="{0} KB" />
+            <DxGridDataColumn FieldName="Id" Width="25%" />
+            <DxGridDataColumn FieldName="Name" Width="*" />
+        </Columns>
+    </DxGrid>
 </div>
-<DxUpload Name="ImageUpload"
-          UploadUrl="@GetUploadUrl("/api/File/UploadFile/")"
-          FileUploaded="@OnUploaded"
-          ExternalSelectButtonCssSelector="#overviewDemoSelectButton"
-          FileUploadStarted="@OnStarted"
-          ExternalDropZoneCssSelector="#overviewDemoDropZone"
-          ExternalDropZoneDragOverCssClass="bg-light border-secondary text-dark"
-          ChunkSize="20000"
-          ShowFileList="false"
-          AllowedFileExtensions="@(new List<string> {".pdf"})">
-</DxUpload>
-
-<button @onclick="DlFile">
-    Download File
-</button>
-<button @onclick="RefreshFileList">Refresh ⟳</button>
-<DxGrid @ref="@dxGrid1" Data="@Data" KeyboardNavigationEnabled="true" CustomizeElement="Grid_CustomizeElement">
-    <Columns>
-        <DxGridDataColumn FieldName="SignStatus" Width="10%" GroupIndex="0" Group />
-        <DxGridDataColumn Caption="Date" FieldName="LastWriteTime" DisplayFormat="D" Width="10%" />
-        <DxGridDataColumn FieldName="FileSize" Width="10%" DisplayFormat="{0} KB" />
-        <DxGridDataColumn FieldName="Id" Width="25%" />
-        <DxGridDataColumn FieldName="Name" Width="*" />
-    </Columns>
-</DxGrid>
-<h3>@var1</h3>
-
 @code {
-    IGrid? dxGrid1;
+    [Inject] IToastNotificationService ToastService { get; set; }
+    //DxPdfViewer pdfViewer { get; set; }
+
+    public byte[] docContent { get; set; }
+    bool Viewable { get; set; } = true;
+    bool IsOpen { get; set; } = false;
     ObservableCollection<FileTag> Data { get; set; } = new ObservableCollection<FileTag>();
+    // ObservableCollection<FileTag> Data { get; set; }
+    FileTag SelectedFileTag { get; set; }
+
+    private RenderFragment RenderButtons() {
+        return @<div style="display: flex; gap: 0.5rem;">
+        <DxButton>Button</DxButton>
+        <DxButton RenderStyle="ButtonRenderStyle.Secondary">Button</DxButton>
+    </div>
+    ;
+    }
+    void OnCloseDrawer() {
+        Viewable = false;
+        IsOpen = false;
+    }
+    void OnClick() {
+        IsOpen = !IsOpen;
+    }
+    private void OnStarted(FileUploadEventArgs e) {
+        _HasDownload = true;
+    }
+    async void OnUploaded(FileUploadEventArgs e) {
+        _FileName = e.FileInfo.Name;
+        _HasDownload = true;
+    }
+    async void ToggleViewability(MouseEventArgs e) {
+        IsOpen = !IsOpen;
+        Viewable = !Viewable;
+    }
+    async void TreeList_FocusedRowChanged(TreeListFocusedRowChangedEventArgs e) {
+        if (e.DataItem == null) return;
+
+        if (SelectedFileTag != null && e.DataItem is FileTag) {
+            ToastService.ShowToast(new ToastOptions()
+                {
+                    ProviderName = "Overview",
+                    ThemeMode = ToastThemeMode.Saturated,
+                    RenderStyle = ToastRenderStyle.Success,
+                    Title = $"{(e.DataItem as FileTag).Name} selected"
+                });
+        }
+
+        SelectedFileTag = e.DataItem as FileTag;
+        var httpClient = ClientFactory.CreateClient("MyApi");
+        var httpResponse = await httpClient.GetAsync($"api/File/{SelectedFileTag.Id}");
+
+        using (var binaryReader = new BinaryReader(httpResponse.Content.ReadAsStream())) {
+
+            docContent = binaryReader.ReadBytes((int)httpResponse.Content.ReadAsStream().Length);
+        }
+
+    }
+    // private void OnCustomizeToolbar(ToolbarModel toolbarModel) {
+
+    //     var downloadToolbarItem = new ToolbarItem
+    //         {
+    //             Text = "Copy",
+    //             IconCssClass = "print-btn",
+    //             AdaptiveText = "Copy link",
+    //             BeginGroup = false,
+    //             Id = "CopyLink",
+    //             Click = async (args) => {
+    //                 await JS.InvokeVoidAsync("copyToClipboard", $"{_NavigationManager.BaseUri}api/file/{SelectedFileTag.Id}");
+    //                 ToastService.ShowToast(new ToastOptions()
+    //                 {
+    //                     ProviderName = "Overview",
+    //                     ThemeMode = ToastThemeMode.Pastel,
+    //                     RenderStyle = ToastRenderStyle.Success,
+    //                     Title = $"Link copied!"
+    //                 });
+    //             }
+    //         };
+    //     toolbarModel.AllItems.Add(downloadToolbarItem);
+    // }
+
+    ITreeList? dxTreeList;
+    IGrid? dxGrid1;
+
     string? _FileName;
     bool _HasDownload = true;
     int _SelectedFilesCount;
 
     void Grid_CustomizeElement(GridCustomizeElementEventArgs e) {
-        if (e.ElementType == GridElementType.DataRow && (SignStatus)e.Grid.GetRowValue(e.VisibleIndex, "SignStatus") == SignStatus.Signed) {
+        if (e.ElementType == GridElementType.DataRow && (SignStatus)e.Grid.GetRowValue(e.VisibleIndex, "SignStatus") ==
+        SignStatus.Signed) {
             e.CssClass = "signed-item";
         }
         if (e.ElementType == GridElementType.DataCell && e.Column.Name == "FileSize") {
             e.Style = "font-weight: 800";
         }
-        // if (e.ElementType == GridElementType.GroupRow && e.Column.Name == "Country") {
-        //     var summaryItems = e.Grid.GetGroupSummaryItems().Select(i => e.Grid.GetGroupSummaryDisplayText(i, e.VisibleIndex));
-        //     e.Attributes["title"] = string.Join(", ", summaryItems);
-        // }
     }
-    protected string GetUploadUrl(string url)
-    {
+    protected string GetUploadUrl(string url) {
         return _NavigationManager.ToAbsoluteUri(url).AbsoluteUri;
     }
-    protected void SelectedFilesChanged(IEnumerable<UploadFileInfo> files)
-    {
+    protected void SelectedFilesChanged(IEnumerable<UploadFileInfo> files) {
         _SelectedFilesCount = files.ToList().Count;
         InvokeAsync(StateHasChanged);
     }
-    private void OnStarted(FileUploadEventArgs e)
-    {
-        _HasDownload = true;
-    }
-    async void OnUploaded(FileUploadEventArgs e)
-    {
-        _FileName = e.FileInfo.Name;
-        _HasDownload = true;
-    }
-    async internal void RefreshFileList()
-    {
-        try
-        {
-            List<FileTag> list = null;
-            var httpClient = ClientFactory.CreateClient("MyApi");
-            var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) =>
-            {
-                var response = t.Result;
-                var jsonStr = await response.Content.ReadAsStringAsync();
-                if (jsonStr != null)
-                    list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
-            });
-            this.Data.Clear();
-            if (list != null)
-                foreach (var k in list) this.Data.Add(k);
-        }
-        catch (Exception)
-        {
-            var1 = 9999;
-        }
+
+    async internal void RefreshFileList() {
+        List<FileTag> list = null;
+        var httpClient = ClientFactory.CreateClient("MyApi");
+        var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) => {
+            var response = t.Result;
+            var jsonStr = await response.Content.ReadAsStringAsync();
+            if (jsonStr != null)
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+        });
+        this.Data.Clear();
+        if (list != null)
+            foreach (var k in list) this.Data.Add(k);
         dxGrid1.ExpandAllGroupRows();
+        // List<FileTag> list = null;
+        // var httpClient = ClientFactory.CreateClient("MyApi");
+        // var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) => {
+        //     var response = t.Result;
+        //     var jsonStr = await response.Content.ReadAsStringAsync();
+        //     if (jsonStr != null)
+        //         list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+        // });
+        // this.Data = new ObservableCollection<FileTag>();
+        // if (list != null)
+        //     foreach (var k in list) this.Data.Add(k);
+
+        // dxTreeList.BeginUpdate();
+        // dxTreeList.Data = Data;
+        // dxTreeList.EndUpdate();
     }
-    int var1 = 0;
-    private Stream GetFileStream()
-    {
-        try
-        {
+
+    private Stream GetFileStream() {
+        try {
             var p = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/favicon.png");
             var st = File.OpenRead(p.ToString());
             return st;
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
 
         }
         var randomBinaryData = new byte[50 * 1024];
@@ -134,25 +218,19 @@
         return fileStream;
     }
 
-    private async Task DlFile()
-    {
-        try
-        {
-            var httpClient = ClientFactory.CreateClient("MyApi");
-            List<FileTag> list = null;
-            var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) => {
-                var response = t.Result;
-                var jsonStr = await response.Content.ReadAsStringAsync();
-                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
-            });
-            var response = await httpClient.GetStreamAsync($"api/File/{list.Last().Id}");
-            var fileName = list.Last().Name;
+    private async Task DlFile() {
+        var httpClient = ClientFactory.CreateClient("MyApi");
+        List<FileTag> list = null;
+        var fileTags = await httpClient.GetAsync("api/File/list").ContinueWith(async (t) => {
+            var response = t.Result;
+            var jsonStr = await response.Content.ReadAsStringAsync();
+            list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FileTag>>(jsonStr);
+        });
+        var response = await httpClient.GetStreamAsync($"api/File/{list.Last().Id}");
+        var fileName = list.Last().Name;
 
-            using var streamRef = new DotNetStreamReference(stream: response);
+        using var streamRef = new DotNetStreamReference(stream: response);
 
-            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-        } catch (Exception) {
-            var1 = 888;
-        }
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 }
